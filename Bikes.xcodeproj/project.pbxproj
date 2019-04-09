@@ -9,19 +9,19 @@
 /* Begin PBXBuildFile section */
 		69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DEC225C776F00B2F425 /* AppDelegate.swift */; };
 		69BE2DEF225C776F00B2F425 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DEE225C776F00B2F425 /* ViewController.swift */; };
-		69BE2DF2225C776F00B2F425 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 69BE2DF0225C776F00B2F425 /* Main.storyboard */; };
 		69BE2DF4225C776F00B2F425 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 69BE2DF3225C776F00B2F425 /* Assets.xcassets */; };
 		69BE2DF7225C776F00B2F425 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */; };
+		69BE2DFF225C78FE00B2F425 /* DigitransitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		69BE2DE9225C776F00B2F425 /* Bikes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bikes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		69BE2DEC225C776F00B2F425 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		69BE2DEE225C776F00B2F425 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		69BE2DF1225C776F00B2F425 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		69BE2DF3225C776F00B2F425 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		69BE2DF6225C776F00B2F425 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		69BE2DF8225C776F00B2F425 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DigitransitService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,7 +56,7 @@
 			children = (
 				69BE2DEC225C776F00B2F425 /* AppDelegate.swift */,
 				69BE2DEE225C776F00B2F425 /* ViewController.swift */,
-				69BE2DF0225C776F00B2F425 /* Main.storyboard */,
+				69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */,
 				69BE2DF3225C776F00B2F425 /* Assets.xcassets */,
 				69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */,
 				69BE2DF8225C776F00B2F425 /* Info.plist */,
@@ -124,7 +124,6 @@
 			files = (
 				69BE2DF7225C776F00B2F425 /* LaunchScreen.storyboard in Resources */,
 				69BE2DF4225C776F00B2F425 /* Assets.xcassets in Resources */,
-				69BE2DF2225C776F00B2F425 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,6 +135,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				69BE2DEF225C776F00B2F425 /* ViewController.swift in Sources */,
+				69BE2DFF225C78FE00B2F425 /* DigitransitService.swift in Sources */,
 				69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -143,14 +143,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		69BE2DF0225C776F00B2F425 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				69BE2DF1225C776F00B2F425 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -285,6 +277,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -292,7 +285,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.mnvr.bikes;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -303,6 +296,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -310,7 +304,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.github.mnvr.bikes;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

@@ -1,20 +1,14 @@
 //
-//  ViewController.swift
-//  Bikes
+//  Copyright (c) 2019 Manav Rathi.
 //
-//  Created by Manav Rathi on 09/04/2019.
-//  Copyright © 2019 Manav. All rights reserved.
+//  MIT License.
 //
 
 import UIKit
 
 class ViewController: UIViewController {
-
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
     }
-
-
 }
 
