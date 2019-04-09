@@ -43,6 +43,32 @@ class MapViewController: UIViewController {
             activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
             ])
 
+        // SVG Icon Source: https://github.com/apancik/public-domain-icons
+        // Saved to "location.svg".
+        //
+        // SVG converted to PDF using: https://cloudconvert.com/svg-to-pdf
+        //
+        // Thank you 💯
+
+        let locationIconImage = UIImage(imageLiteralResourceName: "Location").withRenderingMode(.alwaysTemplate)
+
+        let locateMeButton = UIButton(type: .system)
+        locateMeButton.translatesAutoresizingMaskIntoConstraints = false
+        locateMeButton.setImage(locationIconImage, for: .normal)
+        locateMeButton.adjustsImageSizeForAccessibilityContentSizeCategory = true
+        locateMeButton.addTarget(self, action: #selector(locateMe), for: .touchUpInside)
+
+        view.addSubview(locateMeButton)
+        NSLayoutConstraint.activate([
+            locateMeButton.widthAnchor.constraint(equalToConstant: 44),
+            locateMeButton.heightAnchor.constraint(equalTo: locateMeButton.widthAnchor),
+            locateMeButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
+            locateMeButton.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor),
+            ])
+
+        // TODO: Hide for now
+        locateMeButton.isHidden = true
+
         refresh()
     }
 
@@ -135,6 +161,10 @@ class MapViewController: UIViewController {
         mapView?.showAnnotations(annotations, animated: true)
 
         NSLog("\(String(describing: bikeRentalStations))")
+    }
+
+    @objc private func locateMe() {
+
     }
 }
 
