@@ -7,17 +7,21 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController {
+class MapViewController: UIViewController {
     var digitransitService: DigitransitService?
 
     private var mapView: MKMapView?
     private var activityIndicatorView: UIActivityIndicatorView?
+
+    let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         let mapView = MKMapView(frame: .zero)
         mapView.translatesAutoresizingMaskIntoConstraints = false
+        mapView.delegate = self
+        mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: markerAnnotationViewReuseIdentifier)
         self.mapView = mapView
 
         view.addSubview(mapView)
@@ -110,5 +114,18 @@ class ViewController: UIViewController {
         mapView?.showAnnotations(annotations, animated: true)
 
         NSLog("\(String(describing: bikeRentalStations))")
+    }
+}
+
+extension MapViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
+        guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
+            return view
+        }
+
+        markerAnnotationView.glyphText = annotation.title ?? "?"
+
+        return markerAnnotationView
     }
 }

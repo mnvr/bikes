@@ -15,11 +15,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         digitransitService = DigitransitService()
 
-        let viewController = ViewController()
-        viewController.digitransitService = digitransitService
+        let mapViewController = MapViewController()
+        mapViewController.digitransitService = digitransitService
 
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = viewController
+        window.rootViewController = mapViewController
         window.makeKeyAndVisible()
         self.window = window
 
