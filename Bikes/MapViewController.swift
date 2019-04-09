@@ -89,12 +89,31 @@ class MapViewController: UIViewController {
             // promised was not delivered).
 
             let title: String?
+            let markerTintColor: UIColor?
             if let bikesAvailable = bikeRentalStation.bikesAvailable,
                 let realtime = bikeRentalStation.realtime,
                 realtime == true {
                 title = "\(bikesAvailable)"
+
+                // The color scheme can be improved. I'm not using a
+                // verbatim sequential scheme from colorbrewer because
+                // the foreground color of the text is white, which is
+                // not legible on the sequential schemes.
+
+                if bikesAvailable == 0 {
+                    markerTintColor = .gray
+                } else if bikesAvailable <= 1 {
+                    markerTintColor = .red
+                } else if bikesAvailable <= 3 {
+                    markerTintColor = .orange
+                } else {
+                    // RGB: 44,162,95
+                    // Source: http://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3
+                    markerTintColor = UIColor(red: 44.0 / 255, green: 162.0 / 255, blue: 95.0 / 255, alpha: 1.0)
+                }
             } else {
                 title = "?"
+                markerTintColor = .black
             }
 
             let subtitle = bikeRentalStation.name
@@ -103,10 +122,12 @@ class MapViewController: UIViewController {
             let longitude = CLLocationDegrees(lon)
             let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
 
-            let annotation = MKPointAnnotation()
+            let annotation = BikeStationAnnotation()
             annotation.coordinate = coordinate
             annotation.title = title
             annotation.subtitle = subtitle
+
+            annotation.markerTintColor = markerTintColor
 
             annotations.append(annotation)
         }
@@ -118,6 +139,10 @@ class MapViewController: UIViewController {
 }
 
 extension MapViewController: MKMapViewDelegate {
+    private class BikeStationAnnotation: MKPointAnnotation {
+        var markerTintColor: UIColor?
+    }
+
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
         guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
@@ -125,6 +150,10 @@ extension MapViewController: MKMapViewDelegate {
         }
 
         markerAnnotationView.glyphText = annotation.title ?? "?"
+
+        if let bikeStationAnnotation = annotation as? BikeStationAnnotation {
+            markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
+        }
 
         return markerAnnotationView
     }
