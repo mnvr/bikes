@@ -14,6 +14,8 @@ class MapViewController: UIViewController {
     private var activityIndicatorView: UIActivityIndicatorView?
     private var locationManager: CLLocationManager?
     private var didRequestLocation = false
+    private var isAPIRequestInProgress = false
+    private var lastAPIRequestCompletionDate: Date?
 
     let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
@@ -77,10 +79,13 @@ class MapViewController: UIViewController {
             locateMeWhenAuthorized()
         }
 
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
+
         refresh()
     }
 
     private func refresh() {
+        isAPIRequestInProgress = true
         activityIndicatorView?.startAnimating()
 
         digitransitService?.getBikeRentalStations() { [weak self] (response, error) in
@@ -92,6 +97,9 @@ class MapViewController: UIViewController {
 
     private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
         activityIndicatorView?.stopAnimating()
+
+        isAPIRequestInProgress = false
+        lastAPIRequestCompletionDate = Date()
 
         if let error = error {
             // TODO Surface this in the UI
@@ -257,6 +265,18 @@ class MapViewController: UIViewController {
 
         let viewRegion = MKCoordinateRegion(center: userLocationCoordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView?.region = viewRegion
+    }
+
+    @objc private func refreshIfNeeded() {
+        // Where "needed" is if the last API request was made more than a
+        // minute ago.
+
+        let oneMinute: TimeInterval = 60
+        if !isAPIRequestInProgress,
+            let timeIntervalSinceLastAPIRequest = lastAPIRequestCompletionDate?.timeIntervalSinceNow,
+            -timeIntervalSinceLastAPIRequest > oneMinute {
+            refresh()
+        }
     }
 }
 
