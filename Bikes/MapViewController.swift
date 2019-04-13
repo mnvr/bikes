@@ -254,15 +254,24 @@ class MapViewController: UIViewController {
     }
 
     @objc private func refreshIfNeeded() {
+        if isRefreshNeeded {
+            refresh()
+        }
+    }
+
+    private let oneMinute: TimeInterval = 60
+
+    private var isRefreshNeeded: Bool {
         // Where "needed" is if the last API request was made more than a
         // minute ago.
 
-        let oneMinute: TimeInterval = 60
         if !isAPIRequestInProgress,
             let timeIntervalSinceLastAPIRequest = lastSuccessfulAPIRequestCompletionDate?.timeIntervalSinceNow,
             -timeIntervalSinceLastAPIRequest > oneMinute {
-            refresh()
+            return true
         }
+
+        return false
     }
 
     private func makeLocationToolbarIconImage() -> UIImage {
@@ -286,7 +295,7 @@ class MapViewController: UIViewController {
     }
 
     func updateToolbar() {
-        let leftMostBarButtonItem: UIBarButtonItem
+        let leftMostBarButtonItem: UIBarButtonItem?
         if isAPIRequestInProgress {
             let activityIndicatorView = UIActivityIndicatorView(style: .gray)
             activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
@@ -297,17 +306,30 @@ class MapViewController: UIViewController {
             // The last API request failed, show a red tinted refresh
             // button to indicate an error
             leftMostBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
-            leftMostBarButtonItem.tintColor = .red
+            leftMostBarButtonItem?.tintColor = .red
         } else {
-            // Everything done, and a-ok. Show a regular refresh button.
-            leftMostBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
+            // Everything done, and a-ok. Show a regular refresh button
+            // after one minute
+            if isRefreshNeeded {
+                leftMostBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
+            } else {
+                let oneMinutePlusChange = oneMinute + 5
+                DispatchQueue.main.asyncAfter(deadline: .now() + oneMinutePlusChange) { [weak self] in
+                    self?.updateToolbar()
+                }
+
+                leftMostBarButtonItem = nil
+            }
         }
 
         let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(maybeLocateMe))
 
-        let items = [leftMostBarButtonItem,
-                     UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-                     locateMeBarButtonItem]
+        var items = [UIBarButtonItem]()
+        if let leftMostBarButtonItem = leftMostBarButtonItem {
+            items.append(leftMostBarButtonItem)
+        }
+        items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
+        items.append(locateMeBarButtonItem)
 
         toolbar?.setItems(items, animated: false)
     }
