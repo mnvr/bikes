@@ -11,11 +11,11 @@ class MapViewController: UIViewController {
     var digitransitService: DigitransitService?
 
     private var mapView: MKMapView?
-    private var activityIndicatorView: UIActivityIndicatorView?
+    private var toolbar: UIToolbar?
     private var locationManager: CLLocationManager?
     private var didRequestLocation = false
     private var isAPIRequestInProgress = false
-    private var lastAPIRequestCompletionDate: Date?
+    private var lastSuccessfulAPIRequestCompletionDate: Date?
 
     let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
@@ -36,41 +36,19 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
-        let activityIndicatorView = UIActivityIndicatorView(style: .gray)
-        activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicatorView.hidesWhenStopped = true
-        self.activityIndicatorView = activityIndicatorView
-
-        view.addSubview(activityIndicatorView)
+        let toolbar = UIToolbar(frame: .zero)
+        self.toolbar = toolbar
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toolbar)
         NSLayoutConstraint.activate([
-            activityIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            toolbar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor),
+            view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: toolbar.bottomAnchor)
             ])
 
         let locationManager = CLLocationManager()
         self.locationManager = locationManager
         locationManager.delegate = self
-
-        // SVG Icon Source: https://github.com/apancik/public-domain-icons
-        // Saved to "location.svg".
-        //
-        // SVG converted to PDF using: https://cloudconvert.com/svg-to-pdf
-        //
-        let locationIconImage = UIImage(imageLiteralResourceName: "Location").withRenderingMode(.alwaysTemplate)
-
-        let locateMeButton = UIButton(type: .system)
-        locateMeButton.translatesAutoresizingMaskIntoConstraints = false
-        locateMeButton.setImage(locationIconImage, for: .normal)
-        locateMeButton.adjustsImageSizeForAccessibilityContentSizeCategory = true
-        locateMeButton.addTarget(self, action: #selector(maybeLocateMe), for: .touchUpInside)
-
-        view.addSubview(locateMeButton)
-        NSLayoutConstraint.activate([
-            locateMeButton.widthAnchor.constraint(equalToConstant: 44),
-            locateMeButton.heightAnchor.constraint(equalTo: locateMeButton.widthAnchor),
-            locateMeButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
-            locateMeButton.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor),
-            ])
 
         mapView.showsUserLocation = true
 
@@ -84,9 +62,11 @@ class MapViewController: UIViewController {
         refresh()
     }
 
-    private func refresh() {
+    @objc private func refresh() {
         isAPIRequestInProgress = true
-        activityIndicatorView?.startAnimating()
+        lastSuccessfulAPIRequestCompletionDate = nil
+
+        updateToolbar()
 
         digitransitService?.getBikeRentalStations() { [weak self] (response, error) in
             DispatchQueue.main.async {
@@ -96,16 +76,22 @@ class MapViewController: UIViewController {
     }
 
     private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
-        activityIndicatorView?.stopAnimating()
-
         isAPIRequestInProgress = false
-        lastAPIRequestCompletionDate = Date()
+
+        // The toolbar is currently showing an activity indicator
+        // to indicate a request in progress.
 
         if let error = error {
-            // TODO Surface this in the UI
             NSLog("Failed to fetch station information: \(error)")
+            // The toolbar will now show a red tinted refresh button to
+            // indicate an error.
+            updateToolbar()
             return
         }
+
+        lastSuccessfulAPIRequestCompletionDate = Date()
+        // The toolbar will now show a regular refresh button.
+        updateToolbar()
 
         let bikeRentalStations = response?.data?.bikeRentalStations
 
@@ -273,10 +259,57 @@ class MapViewController: UIViewController {
 
         let oneMinute: TimeInterval = 60
         if !isAPIRequestInProgress,
-            let timeIntervalSinceLastAPIRequest = lastAPIRequestCompletionDate?.timeIntervalSinceNow,
+            let timeIntervalSinceLastAPIRequest = lastSuccessfulAPIRequestCompletionDate?.timeIntervalSinceNow,
             -timeIntervalSinceLastAPIRequest > oneMinute {
             refresh()
         }
+    }
+
+    private func makeLocationToolbarIconImage() -> UIImage {
+        // SVG Icon Source: https://github.com/apancik/public-domain-icons
+        // Saved to "location.svg".
+        //
+        // SVG converted to PDF using: https://cloudconvert.com/svg-to-pdf
+
+        let locationIconImage = UIImage(imageLiteralResourceName: "Location").withRenderingMode(.alwaysTemplate)
+
+        // The Apple Human Interface Guidelines (as of Apr 2019) state
+        // that the size of a toolbar icon should be between
+        // 24 and 28 points.
+        // https://developer.apple.com/design/human-interface-guidelines/ios/icons-and-images/custom-icons/
+
+        let size = CGSize(width: 24, height: 24)
+        let imageRenderer = UIGraphicsImageRenderer(size: size)
+        return imageRenderer.image(actions: { (context) in
+            locationIconImage.draw(in: CGRect(origin: .zero, size: size))
+        })
+    }
+
+    func updateToolbar() {
+        let leftMostBarButtonItem: UIBarButtonItem
+        if isAPIRequestInProgress {
+            let activityIndicatorView = UIActivityIndicatorView(style: .gray)
+            activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+            activityIndicatorView.startAnimating()
+
+            leftMostBarButtonItem = UIBarButtonItem(customView: activityIndicatorView)
+        } else if lastSuccessfulAPIRequestCompletionDate == nil {
+            // The last API request failed, show a red tinted refresh
+            // button to indicate an error
+            leftMostBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
+            leftMostBarButtonItem.tintColor = .red
+        } else {
+            // Everything done, and a-ok. Show a regular refresh button.
+            leftMostBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(refresh))
+        }
+
+        let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(maybeLocateMe))
+
+        let items = [leftMostBarButtonItem,
+                     UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                     locateMeBarButtonItem]
+
+        toolbar?.setItems(items, animated: false)
     }
 }
 
