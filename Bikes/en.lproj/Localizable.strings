@@ -1,0 +1,4 @@
+"no_location_alert_title" = "Location Setting Disabled";
+"no_location_alert_message" = "Please allow location access to show the bikes near you.";
+"no_location_alert_open_settings" = "Open Settings";
+"cancel" = "Cancel";

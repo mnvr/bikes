@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		69B16D1F226247320036137E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D21226247320036137E /* InfoPlist.strings */; };
+		69B16D2422624E2E0036137E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DEC225C776F00B2F425 /* AppDelegate.swift */; };
 		69BE2DF4225C776F00B2F425 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 69BE2DF3225C776F00B2F425 /* Assets.xcassets */; };
 		69BE2DF7225C776F00B2F425 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */; };
@@ -15,6 +17,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		69B16D20226247320036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		69B16D2522624E2E0036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		69BE2DE9225C776F00B2F425 /* Bikes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bikes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		69BE2DEC225C776F00B2F425 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		69BE2DF3225C776F00B2F425 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -60,6 +64,8 @@
 				69BE2DF3225C776F00B2F425 /* Assets.xcassets */,
 				69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */,
 				69BE2DF8225C776F00B2F425 /* Info.plist */,
+				69B16D21226247320036137E /* InfoPlist.strings */,
+				69B16D2622624E2E0036137E /* Localizable.strings */,
 			);
 			path = Bikes;
 			sourceTree = "<group>";
@@ -123,6 +129,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				69BE2DF7225C776F00B2F425 /* LaunchScreen.storyboard in Resources */,
+				69B16D2422624E2E0036137E /* Localizable.strings in Resources */,
+				69B16D1F226247320036137E /* InfoPlist.strings in Resources */,
 				69BE2DF4225C776F00B2F425 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -143,6 +151,22 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		69B16D21226247320036137E /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				69B16D20226247320036137E /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		69B16D2622624E2E0036137E /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				69B16D2522624E2E0036137E /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -205,7 +229,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -260,7 +284,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -277,7 +301,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -296,7 +319,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
