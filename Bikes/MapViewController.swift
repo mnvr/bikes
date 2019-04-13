@@ -258,17 +258,21 @@ extension MapViewController: MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
-        guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
-            return view
-        }
-
         guard let bikeStationAnnotation = annotation as? BikeStationAnnotation else {
             // We will also get called when MapKit needs a marker to show
             // the user's location. Return nil for that (and any other
             // "unknown" annotation type cases) so that the default
             // annotation is used.
+            //
+            // It is important to do this before calling
+            // dequeueReusableAnnotationView below, otherwise MapKit
+            // crashes when trying to show the user location marker.
             return nil
+        }
+
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
+        guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
+            return view
         }
 
         markerAnnotationView.glyphText = annotation.title ?? "?"
