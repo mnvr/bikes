@@ -78,6 +78,33 @@ class DigitransitService {
   }
 }
 """#
+        /*
+
+ For finding bikes near a point, use the following GraphQL
+
+ {
+ nearest(lat: 60.19915, lon: 24.94089, maxDistance: 500, filterByPlaceTypes: BICYCLE_RENT) {
+ edges {
+ node {
+ place {
+ id
+ ...on BikeRentalStation {
+ bikesAvailable
+ id
+ name
+ }
+ }
+ distance
+ }
+ }
+ }
+ }
+
+ Interactive API URL:
+ https://api.digitransit.fi/graphiql/hsl?query=%7B%0A%09nearest(lat%3A%2060.19915%2C%20lon%3A%2024.94089%2C%20maxDistance%3A%20500%2C%20filterByPlaceTypes%3A%20BICYCLE_RENT)%20%7B%0A%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20place%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20...on%20BikeRentalStation%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20bikesAvailable%0A%20%20%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%09distance%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A%09
+
+         */
+
         urlRequest.httpBody = httpBodyString.data(using: .utf8)
 
         let task = urlSession.dataTask(with: urlRequest) { [weak self] (data, urlResponse, error) in
