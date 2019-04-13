@@ -133,17 +133,25 @@ class MapViewController: UIViewController {
                 // verbatim sequential scheme from colorbrewer because
                 // the foreground color of the text is white, which is
                 // not legible on the sequential schemes.
+                //
+                // Current set of colors picked from with the
+                // help of http://tools.medialab.sciences-po.fr/iwanthue/
+                // RGB:
+                // [[225,22,0],
+                //  [241,155,62],
+                //  [16,137,8]]
 
                 if bikesAvailable == 0 {
                     markerTintColor = .gray
                 } else if bikesAvailable <= 1 {
-                    markerTintColor = .red
+                    // Red
+                    markerTintColor = UIColor(red: 225 / 255.0, green: 22 / 255.0, blue: 0 / 255.0, alpha: 1)
                 } else if bikesAvailable <= 3 {
-                    markerTintColor = .orange
+                    // Orange
+                    markerTintColor = UIColor(red: 241 / 255.0, green: 155 / 255.0, blue: 62 / 255.0, alpha: 1)
                 } else {
-                    // RGB: 44,162,95
-                    // Source: http://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3
-                    markerTintColor = UIColor(red: 44.0 / 255, green: 162.0 / 255, blue: 95.0 / 255, alpha: 1.0)
+                    // Green
+                    markerTintColor = UIColor(red: 16 / 255.0, green: 137 / 255.0, blue: 8 / 255.0, alpha: 1)
                 }
             } else {
                 title = "?"
