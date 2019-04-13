@@ -263,11 +263,16 @@ extension MapViewController: MKMapViewDelegate {
             return view
         }
 
-        markerAnnotationView.glyphText = annotation.title ?? "?"
-
-        if let bikeStationAnnotation = annotation as? BikeStationAnnotation {
-            markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
+        guard let bikeStationAnnotation = annotation as? BikeStationAnnotation else {
+            // We will also get called when MapKit needs a marker to show
+            // the user's location. Return nil for that (and any other
+            // "unknown" annotation type cases) so that the default
+            // annotation is used.
+            return nil
         }
+
+        markerAnnotationView.glyphText = annotation.title ?? "?"
+        markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
 
         return markerAnnotationView
     }
