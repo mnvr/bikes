@@ -2,9 +2,12 @@
 
 An iOS app to list the Helsinki city bikes near your location.
 
-Unofficial, not affiliated to anyone; made for my personal use.
+The app lists the information on a map. There is also a Notification
+Center widget to quickly see the nearest stations with bikes currently
+available.
 
-WIP.
+Note that this is a third party app, and is not affiliated with HSL or
+the City Bike service.
 
 ## Use Case
 
