@@ -2,4 +2,6 @@
 "no_location_alert_message" = "Please allow location access to show the bikes near you.";
 "no_location_alert_open_settings" = "Open Settings";
 "cancel" = "Cancel";
+"today_extension_tap_to_allow_location_access" = "Tap to allow location access for showing bikes near you";
+"today_extension_request_failed" = "Could not fetch nearby bike information";
 "today_extension_no_nearby_bikes" = "No bikes are available nearby";
