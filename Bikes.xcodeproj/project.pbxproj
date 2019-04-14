@@ -10,6 +10,7 @@
 		6902CE8F22633164003945E3 /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6902CE8E22633164003945E3 /* NotificationCenter.framework */; };
 		6902CE9222633164003945E3 /* TodayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6902CE9122633164003945E3 /* TodayViewController.swift */; };
 		6902CE9922633164003945E3 /* TodayExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 6902CE8C22633164003945E3 /* TodayExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6902CE9E22633A86003945E3 /* DigitransitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */; };
 		69B16D1F226247320036137E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D21226247320036137E /* InfoPlist.strings */; };
 		69B16D2422624E2E0036137E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DEC225C776F00B2F425 /* AppDelegate.swift */; };
@@ -231,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6902CE9E22633A86003945E3 /* DigitransitService.swift in Sources */,
 				6902CE9222633164003945E3 /* TodayViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
