@@ -5,3 +5,14 @@
 "today_extension_tap_to_allow_location_access" = "Tap to allow location access for showing bikes near you";
 "today_extension_request_failed" = "Could not fetch nearby bike information";
 "today_extension_no_nearby_bikes" = "No bikes are available nearby";
+"info_action_sheet_title" = "Helsinki City Bikes";
+"info_action_sheet_message" = "This app shows the Helsinki City Bikes available near you on a map.\
+\
+There is also a Today widget that you can add to your Notification Center to quickly show the number of bikes on the nearest three stations.\
+\
+Note that this is a third party app, and is not affiliated with HSL or the City Bike service.\
+\
+Made with ❤️ in Helsinki";
+"info_action_sheet_city_bike_website" = "https://kaupunkipyorat.hsl.fi";
+"info_action_sheet_request_a_feature" = "Request a Feature";
+"info_action_sheet_okay" = "Okay";

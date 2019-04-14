@@ -36,6 +36,16 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
+        let infoButton = UIButton(type: .infoLight)
+        infoButton.translatesAutoresizingMaskIntoConstraints = false
+        infoButton.addTarget(self, action: #selector(showInfo), for: .touchUpInside)
+
+        view.addSubview(infoButton)
+        NSLayoutConstraint.activate([
+            infoButton.topAnchor.constraint(equalToSystemSpacingBelow: view.safeAreaLayoutGuide.topAnchor, multiplier: 1),
+            view.safeAreaLayoutGuide.trailingAnchor.constraint(equalToSystemSpacingAfter: infoButton.trailingAnchor, multiplier: 1)
+            ])
+
         let toolbar = UIToolbar(frame: .zero)
         self.toolbar = toolbar
         toolbar.translatesAutoresizingMaskIntoConstraints = false
@@ -330,6 +340,46 @@ class MapViewController: UIViewController {
         items.append(locateMeBarButtonItem)
 
         toolbar?.setItems(items, animated: false)
+    }
+
+    @objc private func showInfo() {
+        let title = NSLocalizedString("info_action_sheet_title", comment: "")
+        let message = NSLocalizedString("info_action_sheet_message", comment: "")
+
+        let websiteTitle = NSLocalizedString("info_action_sheet_city_bike_website", comment: "")
+        let requestAFeatureTitle = NSLocalizedString("Request a Feature", comment: "")
+        let okayTitle = NSLocalizedString("info_action_sheet_okay", comment: "")
+
+        let alertController = UIAlertController(title: title, message: text, preferredStyle: .actionSheet)
+
+        alertController.addAction(UIAlertAction(title: "https://kaupunkipyorat.hsl.fi", style: .default, handler: { [weak self] _ in
+            self?.openCityBikeWebsite()
+        }))
+
+        alertController.addAction(UIAlertAction(title: "Request a Feature", style: .default, handler: { [weak self] _ in
+            self?.requestAFeature()()
+        }))
+
+        alertController.addAction(UIAlertAction(title: okayTitle, style: .cancel, handler: nil))
+
+        present(alertController, animated: true)
+    }
+
+    private func openCityBikeWebsite() {
+        // The website title is also the URL of the website, and it is
+        // different for each localization.
+        let websiteURLString = NSLocalizedString("info_action_sheet_city_bike_website", comment: "")
+        if let url = URL(string: websiteURLString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func requestAFeature() {
+        // The website title is also the URL of the website, and it is
+        // different for each localization.
+        if let url = URL(string: "https://github.com/mnvr/bikes/issues") {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
