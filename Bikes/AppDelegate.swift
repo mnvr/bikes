@@ -25,4 +25,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         return true
     }
+
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        if url.host == "settings" {
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        }
+        return true
+    }
 }

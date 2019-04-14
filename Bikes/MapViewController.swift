@@ -187,8 +187,6 @@ class MapViewController: UIViewController {
 
             mapView?.showAnnotations(annotations, animated: true)
         }
-
-        NSLog("\(String(describing: bikeRentalStations))")
     }
 
     @objc private func maybeLocateMe() {

@@ -193,16 +193,30 @@ class TodayViewController: UIViewController {
     }
 
     private func openSettings() {
+        // The following code does not work:
+        /*
         if let url = URL(string: UIApplication.openSettingsURLString) {
+            extensionContext?.open(url, completionHandler: nil)
+        }
+         */
+        // The settings app is not opened, and the following is
+        // printed on the console:
+        /*
+ TodayExtension[8400:3179528] -[_NCWidgetExtensionContext openURL:completionHandler:]_block_invoke failed: Error Domain=NSOSStatusErrorDomain Code=-10814 "(null)"
+         */
+
+        // As a workaround, trampoline to the main app to open the
+        // settings app.
+
+        if let url = URL(string: "bikes://settings") {
             extensionContext?.open(url, completionHandler: nil)
         }
     }
 
     private func openApp() {
-        guard let url = URL(string: "bikes://") else {
-            return
+        if let url = URL(string: "bikes://") {
+            extensionContext?.open(url, completionHandler: nil)
         }
-        extensionContext?.open(url, completionHandler: nil)
     }
 }
 
