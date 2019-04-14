@@ -129,6 +129,25 @@ class TodayViewController: UIViewController {
     }
 
     private func didGetNearestBikeRentalStations(response: DigitransitService.NearestBikeRentalStationsResponse?, error: Error?) {
+        // Unfortunately, I have observed in practice that the number of
+        // bikes returned in the nearest query is sometimes incorrect.
+        // Last observed: 14 April 2019
+        //
+        // As a workaround, only obtain the names from the nearest query
+        // and then do a full query (which always seems to return
+        // accurate results) to get the actual number of bikes.
+
+        guard let response = response else {
+            didGetNearestBikeRentalStations(response: nil, bikeRentalStationsResponse: nil, error: error)
+            return
+        }
+
+        digitransitService.getBikeRentalStations { [weak self] bikeRentalStationsResponse, error in
+            self?.didGetNearestBikeRentalStations(response: response, bikeRentalStationsResponse: bikeRentalStationsResponse, error: error)
+        }
+    }
+
+    private func didGetNearestBikeRentalStations(response: DigitransitService.NearestBikeRentalStationsResponse?, bikeRentalStationsResponse: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
 
@@ -166,11 +185,25 @@ class TodayViewController: UIViewController {
             if let node = edge.node,
                 let bikeRentalStation = node.place,
                 let name = bikeRentalStation.name,
-                let bikesAvailable = bikeRentalStation.bikesAvailable,
+                var bikesAvailable = bikeRentalStation.bikesAvailable,
                 bikesAvailable > 0,
                 let realtime = bikeRentalStation.realtime,
                 realtime == true,
                 let distance = node.distance {
+
+                // Find a matching entry in the full response.
+                //
+                // This join can be easily optimized, but the number of
+                // stations involved is pretty small that we get can
+                // get by for now with these linear scans.
+                //
+                // See note above in didGetNearestBikeRentalStations
+                // for why this is needed.
+
+                if let accurateBikesAvailable = bikeRentalStationsResponse?.data?.bikeRentalStations?.first(where: { $0.name == name })?.bikesAvailable {
+                    bikesAvailable = accurateBikesAvailable
+                }
+
                 let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
                 let line = String.localizedStringWithFormat(formatString, bikesAvailable, name, distance)
                 lines.append(line)

@@ -178,11 +178,11 @@ class DigitransitService {
 """#
 
         getRoutingGraphQL(graphQLString) { [weak self] (data, error) in
-            self?.getNearestBikeRentalStations(data: data, error: error, completion: completion)
+            self?.didGetNearestBikeRentalStations(data: data, error: error, completion: completion)
         }
     }
 
-    private func getNearestBikeRentalStations(data: Data?, error: Error?, completion: @escaping (NearestBikeRentalStationsResponse?, Error?) -> Void) {
+    private func didGetNearestBikeRentalStations(data: Data?, error: Error?, completion: @escaping (NearestBikeRentalStationsResponse?, Error?) -> Void) {
         guard let data = data, error == nil else {
             completion(nil, error)
             return
