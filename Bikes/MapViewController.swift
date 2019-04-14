@@ -36,16 +36,6 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
-        let infoButton = UIButton(type: .infoLight)
-        infoButton.translatesAutoresizingMaskIntoConstraints = false
-        infoButton.addTarget(self, action: #selector(showInfo), for: .touchUpInside)
-
-        view.addSubview(infoButton)
-        NSLayoutConstraint.activate([
-            infoButton.topAnchor.constraint(equalToSystemSpacingBelow: view.safeAreaLayoutGuide.topAnchor, multiplier: 1),
-            view.safeAreaLayoutGuide.trailingAnchor.constraint(equalToSystemSpacingAfter: infoButton.trailingAnchor, multiplier: 1)
-            ])
-
         let toolbar = UIToolbar(frame: .zero)
         self.toolbar = toolbar
         toolbar.translatesAutoresizingMaskIntoConstraints = false
@@ -330,6 +320,12 @@ class MapViewController: UIViewController {
             }
         }
 
+        let infoButton = UIButton(type: .infoLight)
+        infoButton.translatesAutoresizingMaskIntoConstraints = false
+        infoButton.addTarget(self, action: #selector(showInfo), for: .touchUpInside)
+
+        let infoBarButtonItem = UIBarButtonItem(customView: infoButton)
+
         let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(maybeLocateMe))
 
         var items = [UIBarButtonItem]()
@@ -337,6 +333,10 @@ class MapViewController: UIViewController {
             items.append(leftMostBarButtonItem)
         }
         items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
+        items.append(infoBarButtonItem)
+        let fixedSpace = UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil)
+        fixedSpace.width = 15
+        items.append(fixedSpace)
         items.append(locateMeBarButtonItem)
 
         toolbar?.setItems(items, animated: false)
@@ -350,14 +350,14 @@ class MapViewController: UIViewController {
         let requestAFeatureTitle = NSLocalizedString("Request a Feature", comment: "")
         let okayTitle = NSLocalizedString("info_action_sheet_okay", comment: "")
 
-        let alertController = UIAlertController(title: title, message: text, preferredStyle: .actionSheet)
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
 
-        alertController.addAction(UIAlertAction(title: "https://kaupunkipyorat.hsl.fi", style: .default, handler: { [weak self] _ in
+        alertController.addAction(UIAlertAction(title: websiteTitle, style: .default, handler: { [weak self] _ in
             self?.openCityBikeWebsite()
         }))
 
-        alertController.addAction(UIAlertAction(title: "Request a Feature", style: .default, handler: { [weak self] _ in
-            self?.requestAFeature()()
+        alertController.addAction(UIAlertAction(title: requestAFeatureTitle, style: .default, handler: { [weak self] _ in
+            self?.requestAFeature()
         }))
 
         alertController.addAction(UIAlertAction(title: okayTitle, style: .cancel, handler: nil))
