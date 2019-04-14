@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		6902CE8F22633164003945E3 /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6902CE8E22633164003945E3 /* NotificationCenter.framework */; };
 		6902CE9222633164003945E3 /* TodayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6902CE9122633164003945E3 /* TodayViewController.swift */; };
-		6902CE9522633164003945E3 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6902CE9322633164003945E3 /* MainInterface.storyboard */; };
 		6902CE9922633164003945E3 /* TodayExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 6902CE8C22633164003945E3 /* TodayExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		69B16D1F226247320036137E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D21226247320036137E /* InfoPlist.strings */; };
 		69B16D2422624E2E0036137E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
@@ -48,7 +47,6 @@
 		6902CE8C22633164003945E3 /* TodayExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TodayExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6902CE8E22633164003945E3 /* NotificationCenter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NotificationCenter.framework; path = System/Library/Frameworks/NotificationCenter.framework; sourceTree = SDKROOT; };
 		6902CE9122633164003945E3 /* TodayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewController.swift; sourceTree = "<group>"; };
-		6902CE9422633164003945E3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		6902CE9622633164003945E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		69B16D20226247320036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		69B16D2522624E2E0036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -92,7 +90,6 @@
 			isa = PBXGroup;
 			children = (
 				6902CE9122633164003945E3 /* TodayViewController.swift */,
-				6902CE9322633164003945E3 /* MainInterface.storyboard */,
 				6902CE9622633164003945E3 /* Info.plist */,
 			);
 			path = TodayExtension;
@@ -213,7 +210,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6902CE9522633164003945E3 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,14 +256,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		6902CE9322633164003945E3 /* MainInterface.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				6902CE9422633164003945E3 /* Base */,
-			);
-			name = MainInterface.storyboard;
-			sourceTree = "<group>";
-		};
 		69B16D21226247320036137E /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -301,7 +289,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = TodayExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -311,7 +298,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -321,7 +308,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = TodayExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -331,7 +317,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
