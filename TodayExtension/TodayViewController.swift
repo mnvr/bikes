@@ -12,69 +12,50 @@ class TodayViewController: UIViewController {
     // While it is not under our control, in practice the
     // widgetPerformUpdate method is called frequently enough by the OS
     // such that we can design our widget as a "one-shot" flow and
-    // do not need to worry about surfacing the refresh button
+    // do not need to worry about surfacing a refresh button
     // again once a query has been made.
     //
     // When the widgetPerformUpdate method is called:
-    // - Return NCUpdateResult.newData
-    // - This causes a viewDidLoad to be called
-    // - Where we show the refreshLabel (which shows a "refresh" glyph
-    //   to the user, indicating that they should tap to refresh).
-    // - If the user has not allowed location access, then the refreshLabel
-    //   instead shows a message prompting the user to allow access. On
-    //   tapping it, we ask for access (or take the user to settings if
-    //   they've previously denied access access).
-    // - If the user taps at this point, perform an API call. While
-    //   that is in progress, show an activity indicator.
+    // - Return NCUpdateResult.newData.
+    // - This causes a viewDidLoad to be called.
+    // - If the user has not allowed location access, then show a message
+    //   telling the user that location access is needed. On taps, prompt
+    //   for access (or take the user to settings if they've previously
+    //   denied access access).
+    // - Otherwise query the API, showing an activity indicator.
     // - Once the request completes, show the results in a multiline
-    //   results label.
+    //   results label. This label is also used to show if errors occurred,
+    //   or if there were no results.
     // - If the user taps at any point now, open the app.
 
-    private var refreshLabel: UILabel?
+    private var locationAccessNeededLabel: UILabel?
     private var activityIndicatorView: UIActivityIndicatorView?
     private var resultsLabel: UILabel?
 
     private lazy var digitransitService = DigitransitService()
-    private lazy var locationManager = CLLocationManager()
+    private lazy var locationManager: CLLocationManager = {
+        let locationManager = CLLocationManager()
+        locationManager.delegate = self
+        return locationManager
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let label = UILabel(frame: .zero)
-        self.refreshLabel = label
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textAlignment = .center
-        label.adjustsFontForContentSizeCategory = true
-        label.adjustsFontSizeToFitWidth = true
-
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            label.font = .preferredFont(forTextStyle: .title1)
-            label.text = "⟳"
+            queryAPI()
         } else {
-            label.font = .preferredFont(forTextStyle: .callout)
-            label.numberOfLines = 0
-            label.text = NSLocalizedString("today_extension_tap_to_allow_location_access", comment: "")
+            showLocationAccessNeededLabel()
         }
-
-        view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalToSystemSpacingAfter: view.readableContentGuide.leadingAnchor, multiplier: 1),
-            view.readableContentGuide.trailingAnchor.constraint(equalToSystemSpacingAfter: label.trailingAnchor, multiplier: 1),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            label.topAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: view.topAnchor, multiplier: 1),
-            view.bottomAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: label.bottomAnchor, multiplier: 1)
-            ])
 
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tap))
         view.addGestureRecognizer(tapGestureRecognizer)
     }
 
     @objc private func tap() {
-        if refreshLabel != nil {
-            // We are displaying the refresh label, so do a refresh
-            // in response to the tap
-            getLocation()
+        if locationAccessNeededLabel != nil {
+            promptForLocationAccess()
         } else if activityIndicatorView != nil {
             // There is a request in progress, do nothing
         } else if resultsLabel != nil {
@@ -84,12 +65,35 @@ class TodayViewController: UIViewController {
         }
     }
 
-    private func getLocation() {
+    private func showLocationAccessNeededLabel() {
+        let label = UILabel(frame: .zero)
+        self.locationAccessNeededLabel = label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
+        label.adjustsFontSizeToFitWidth = true
+        label.font = .preferredFont(forTextStyle: .callout)
+        label.numberOfLines = 0
+        label.text = NSLocalizedString("today_extension_tap_to_allow_location_access", comment: "")
+
+        view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalToSystemSpacingAfter: view.readableContentGuide.leadingAnchor, multiplier: 1),
+            view.readableContentGuide.trailingAnchor.constraint(equalToSystemSpacingAfter: label.trailingAnchor, multiplier: 1),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            label.topAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: view.topAnchor, multiplier: 1),
+            view.bottomAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: label.bottomAnchor, multiplier: 1)
+            ])
+    }
+
+    private func promptForLocationAccess() {
         switch CLLocationManager.authorizationStatus() {
         case .authorizedAlways, .authorizedWhenInUse:
-            refresh()
+            queryAPI()
 
         case .notDetermined:
+            // If the user provides the permission, then Core Location will let
+            // us know by calling the CLLocationManagerDelegate method below.
             locationManager.requestWhenInUseAuthorization()
 
         case .denied, .restricted:
@@ -100,13 +104,10 @@ class TodayViewController: UIViewController {
         }
     }
 
-    private func refresh() {
+    private func queryAPI() {
         guard let userLocation = locationManager.location else {
             return
         }
-
-        refreshLabel?.removeFromSuperview()
-        refreshLabel = nil
 
         let activityIndicatorView = UIActivityIndicatorView(style: .gray)
         self.activityIndicatorView = activityIndicatorView
@@ -270,5 +271,41 @@ extension TodayViewController: NCWidgetProviding {
         // If there's an update, use NCUpdateResult.NewData
         
         completionHandler(NCUpdateResult.newData)
+    }
+}
+
+extension TodayViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if locationAccessNeededLabel == nil {
+            // The docs state thet the authorization status might change
+            // without any action on our part (e.g. due to Airplane mode).
+            // https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services/requesting_when-in-use_authorization
+            //
+            // So only do something in this method if we know it was
+            // called because of us calling
+            // locationManager?.requestWhenInUseAuthorization() above.
+
+            // I also observed that Core Location automatically calls
+            // this method for us after viewDidLoad when location
+            // has been granted. Since we're already doing queryAPI
+            // from viewDidLoad if we had access, without this check
+            // there would be duplicate requests.
+
+            return
+        }
+
+        let authorizationStatus = CLLocationManager.authorizationStatus()
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            // If we are authorized, then what has happened is:
+            // - The user pressed the locate button
+            // - Said yes on the OS prompt
+            // - We come here
+            // So now do what they want.
+
+            locationAccessNeededLabel?.removeFromSuperview()
+            locationAccessNeededLabel = nil
+
+            queryAPI()
+        }
     }
 }
