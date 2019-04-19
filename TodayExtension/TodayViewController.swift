@@ -101,7 +101,7 @@ class TodayViewController: UIViewController {
     }
 
     private func refresh() {
-        guard let userLocationCoordinate = locationManager.location?.coordinate else {
+        guard let userLocation = locationManager.location else {
             return
         }
 
@@ -119,47 +119,94 @@ class TodayViewController: UIViewController {
             activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
             ])
 
-        let latitude = userLocationCoordinate.latitude
-        let longitude = userLocationCoordinate.longitude
-        digitransitService.getNearestBikeRentalStations(latitude: latitude, longitude: longitude) { [weak self] (response, error) in
-            DispatchQueue.main.async {
-                self?.didGetNearestBikeRentalStations(response: response, error: error)
-            }
-        }
-    }
-
-    private func didGetNearestBikeRentalStations(response: DigitransitService.NearestBikeRentalStationsResponse?, error: Error?) {
+        // In the first iteration, I tried using the digitransit nearest
+        // API to find the bike stations nearest to the user coordinate.
+        //
         // Unfortunately, I have observed in practice that the number of
         // bikes returned in the nearest query is sometimes incorrect.
         // Last observed: 14 April 2019
         //
-        // As a workaround, only obtain the names from the nearest query
-        // and then do a full query (which always seems to return
+        // As a workaround, I tried to only obtain the names from the nearest
+        // query and then do a full query (which always seems to return
         // accurate results) to get the actual number of bikes.
+        //
+        // However, then I observed that the nearest query sometimes just
+        // returns wrong results (i.e. it would return not return
+        // locations near me when there were indeed bikes there), so
+        // joining with the actual (correct) number of bikes from the full
+        // query would not help (since the nearest response would just not
+        // contain the correct station names).
+        //
+        // This is very likely happening because I am not using the API
+        // properly. No sarcasm intended, I genuinely am very happy with
+        // the API, and it seems surprising that it would not work.
+        //
+        // Anyways, for now, we always do the full query, and perform
+        // the nearest matching locally. This actually should be easier
+        // on the API too, because the full response should almost always
+        // be a pre-generated/cached JSON that requires no CPU. In practice
+        // too, I've observed that the full query response is perceptibly
+        // faster than the nearest query.
 
-        guard let response = response else {
-            didGetNearestBikeRentalStations(response: nil, bikeRentalStationsResponse: nil, error: error)
-            return
-        }
-
-        digitransitService.getBikeRentalStations { [weak self] bikeRentalStationsResponse, error in
-            self?.didGetNearestBikeRentalStations(response: response, bikeRentalStationsResponse: bikeRentalStationsResponse, error: error)
+        digitransitService.getBikeRentalStations { [weak self] response, error in
+            DispatchQueue.main.async {
+                self?.didGetBikeRentalStations(response: response, error: error, userLocation: userLocation)
+            }
         }
     }
 
-    private func didGetNearestBikeRentalStations(response: DigitransitService.NearestBikeRentalStationsResponse?, bikeRentalStationsResponse: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
+    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
 
         if let error = error {
             NSLog("Failed to fetch station information: \(error)")
-            // Continue though.
-            //
-            // We will show the error message on the results label itself.
+
+            let errorMessage = NSLocalizedString("today_extension_request_failed", comment: "")
+            showResultsLabel(lines: [errorMessage])
+
+            return
         }
 
-        let edges = response?.data?.nearest?.edges ?? []
+        var distanceAndData = [(distance: Int, bikesAvailable: Int, name: String)]()
+        for bikeRentalStation in response?.data?.bikeRentalStations ?? [] {
+            guard let bikesAvailable = bikeRentalStation.bikesAvailable,
+                bikeRentalStation.realtime == true,
+                let name = bikeRentalStation.name,
+                let lat = bikeRentalStation.lat,
+                let lon = bikeRentalStation.lon else {
+                    continue
+            }
 
+            let location = CLLocation(latitude: Double(lat), longitude: Double(lon))
+            // The returned distance is in meters. Truncate down.
+            // Note that this is the "crow flies" distance, not the walking
+            // distance, AFAIK there is no API to get that ATM.
+            let distance = Int(location.distance(from: userLocation))
+            distanceAndData.append((distance: distance, bikesAvailable: bikesAvailable, name: name))
+        }
+
+        if distanceAndData.isEmpty {
+            let noResultsMessage = NSLocalizedString("today_extension_no_nearby_bikes", comment: "")
+            showResultsLabel(lines: [noResultsMessage])
+
+            return
+        }
+
+        let sortedDistanceAndData = distanceAndData.sorted(by: { $0.distance < $1.distance })
+        let nearestDistanceAndData = sortedDistanceAndData.prefix(3)
+
+        var lines = [String]()
+        for (distance, bikesAvailable, name) in nearestDistanceAndData {
+            let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
+            let line = String.localizedStringWithFormat(formatString, bikesAvailable, name, distance)
+            lines.append(line)
+        }
+
+        showResultsLabel(lines: lines)
+    }
+
+    private func showResultsLabel(lines: [String]) {
         let label = UILabel(frame: .zero)
         self.resultsLabel = label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -176,66 +223,27 @@ class TodayViewController: UIViewController {
             view.bottomAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: label.bottomAnchor, multiplier: 1)
             ])
 
-        var lines = [String]()
-        for edge in edges {
-            if lines.count == 3 {
-                break
-            }
-
-            if let node = edge.node,
-                let bikeRentalStation = node.place,
-                let name = bikeRentalStation.name,
-                var bikesAvailable = bikeRentalStation.bikesAvailable,
-                bikesAvailable > 0,
-                let realtime = bikeRentalStation.realtime,
-                realtime == true,
-                let distance = node.distance {
-
-                // Find a matching entry in the full response.
-                //
-                // This join can be easily optimized, but the number of
-                // stations involved is pretty small that we get can
-                // get by for now with these linear scans.
-                //
-                // See note above in didGetNearestBikeRentalStations
-                // for why this is needed.
-
-                if let accurateBikesAvailable = bikeRentalStationsResponse?.data?.bikeRentalStations?.first(where: { $0.name == name })?.bikesAvailable {
-                    bikesAvailable = accurateBikesAvailable
-                }
-
-                let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
-                let line = String.localizedStringWithFormat(formatString, bikesAvailable, name, distance)
-                lines.append(line)
-            }
-        }
-
-        if lines.count == 0 {
-            label.textAlignment = .center
-            if error != nil {
-                label.text = NSLocalizedString("today_extension_request_failed", comment: "")
-            } else {
-                label.text = NSLocalizedString("today_extension_no_nearby_bikes", comment: "")
-            }
-
-            return
-        }
-
         label.numberOfLines = lines.count
         label.text = lines.joined(separator: "\n")
+
+        if lines.count == 1 {
+            // This happens either when there was an error, or if
+            // we have no results.
+            label.textAlignment = .center
+        }
     }
 
     private func openSettings() {
         // The following code does not work:
         /*
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            extensionContext?.open(url, completionHandler: nil)
-        }
+         if let url = URL(string: UIApplication.openSettingsURLString) {
+         extensionContext?.open(url, completionHandler: nil)
+         }
          */
         // The settings app is not opened, and the following is
         // printed on the console:
         /*
- TodayExtension[8400:3179528] -[_NCWidgetExtensionContext openURL:completionHandler:]_block_invoke failed: Error Domain=NSOSStatusErrorDomain Code=-10814 "(null)"
+         TodayExtension[8400:3179528] -[_NCWidgetExtensionContext openURL:completionHandler:]_block_invoke failed: Error Domain=NSOSStatusErrorDomain Code=-10814 "(null)"
          */
 
         // As a workaround, trampoline to the main app to open the
