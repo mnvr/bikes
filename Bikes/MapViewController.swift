@@ -419,7 +419,36 @@ extension MapViewController: MKMapViewDelegate {
         markerAnnotationView.glyphText = annotation.title ?? "?"
         markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
 
+        let detailsButton = UIButton(type: .detailDisclosure)
+        detailsButton.translatesAutoresizingMaskIntoConstraints = false
+
+        markerAnnotationView.canShowCallout = true
+        markerAnnotationView.rightCalloutAccessoryView = detailsButton
+
         return markerAnnotationView
+    }
+
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        guard let coordinate = view.annotation?.coordinate else {
+            return
+        }
+
+        // Map Links Documentation: https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html
+        //
+        // The format of the one we need:
+        // http://maps.apple.com/maps?saddr=Current+Location&daddr=<Your Location>
+        //
+        // The docs (when I looked) did not mention it, but "Current Location"
+        // seems to be the countersign.
+        // TODO: Test this with Finnish locale.
+
+        let locationString = "\(coordinate.latitude),\(coordinate.longitude)"
+        let urlString = "http://maps.apple.com/maps?saddr=Current+Location&daddr=\(locationString)"
+        guard let url = URL(string: urlString) else {
+            return
+        }
+
+        UIApplication.shared.open(url)
     }
 }
 
