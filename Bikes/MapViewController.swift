@@ -16,6 +16,7 @@ class MapViewController: UIViewController {
     private var didRequestLocation = false
     private var isAPIRequestInProgress = false
     private var lastSuccessfulAPIRequestCompletionDate: Date?
+    private var lastPlacedAnnotations = [MKAnnotation]()
 
     let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
@@ -167,6 +168,15 @@ class MapViewController: UIViewController {
 
             annotations.append(annotation)
         }
+
+        // Remove last placed annotations.
+        //
+        // We need to keep track of the annotations that we placed
+        // so that we only remove those (and don't remove, e.g.
+        // the user location annotation placed by MapKit for us).
+
+        mapView?.removeAnnotations(lastPlacedAnnotations)
+        lastPlacedAnnotations = annotations
 
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
