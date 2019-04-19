@@ -283,11 +283,6 @@ class MapViewController: UIViewController {
     }
 
     private func makeLocationToolbarIconImage() -> UIImage {
-        // SVG Icon Source: https://github.com/apancik/public-domain-icons
-        // Saved to "location.svg".
-        //
-        // SVG converted to PDF using: https://cloudconvert.com/svg-to-pdf
-
         let locationIconImage = UIImage(imageLiteralResourceName: "Location").withRenderingMode(.alwaysTemplate)
 
         // The Apple Human Interface Guidelines (as of Apr 2019) state
