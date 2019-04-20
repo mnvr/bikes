@@ -37,6 +37,27 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
+        let attachmentView = makeAttachmentView()
+
+        view.addSubview(attachmentView)
+        NSLayoutConstraint.activate([
+            attachmentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: attachmentView.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: attachmentView.bottomAnchor),
+            ])
+
+        // Tell UIKit about the initial height of the attachment view so
+        // that the map view moves the "Legal" label at the bottom above
+        // the initial height of the attachment view.
+        additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: attachmentViewInitialContentHeight, right: 0)
+
+        attachmentViewInitialHeight = attachmentViewInitialContentHeight
+        attachmentViewHeightConstraint = attachmentView.heightAnchor.constraint(equalToConstant: attachmentViewInitialHeight)
+        attachmentViewHeightConstraint?.isActive = true
+
+        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panAttachmentView))
+        attachmentView.addGestureRecognizer(panGestureRecognizer)
+/*
         let toolbar = UIToolbar(frame: .zero)
         self.toolbar = toolbar
         toolbar.translatesAutoresizingMaskIntoConstraints = false
@@ -47,12 +68,14 @@ class MapViewController: UIViewController {
             view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: toolbar.bottomAnchor)
             ])
 
+*/
         let locationManager = CLLocationManager()
         self.locationManager = locationManager
         locationManager.delegate = self
 
         mapView.showsUserLocation = true
 
+        /*
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locateMeWhenAuthorized()
@@ -61,6 +84,104 @@ class MapViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
 
         refresh()
+ */
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+
+        // Increase the height of the attachment view to account for the
+        // safe area, if any. We cannot pin to the safe area layout guide
+        // because we want the attachment view to extend into the safe
+        // area, though it should not have any content in the safe area.
+        //
+        // The safe area insets are zero in viewDidLoad. They become
+        // valid in viewSafeAreaInsetsDidChange.
+        //
+        // Note that this method might be called multiple times. If
+        // it is called after the user has swiped up to reveal the
+        // attachment view, then the attachment view would collapse
+        // again, but currently I can't think of a scenario where
+        // that would happen, so no safeguards against that.
+
+        let bottomSafeAreaInset = view.safeAreaInsets.bottom
+        // This should be something like
+        // attachmentViewInitialHeight = attachmentViewInitialContentHeight + bottomSafeAreaInset
+        // but we've already added attachmentViewInitialContentHeight to
+        // the additional safe area insets in view did load, so now
+        // the bottom safe inset already includes that.
+        attachmentViewInitialHeight = bottomSafeAreaInset
+
+        attachmentViewHeightConstraint?.constant = attachmentViewInitialHeight
+    }
+
+    private var attachmentViewHeightConstraint: NSLayoutConstraint?
+    private let attachmentViewInitialContentHeight: CGFloat = 44
+    // This is computed at runtime from to account for the safe area.
+    private var attachmentViewInitialHeight: CGFloat = 0
+    private var attachmentViewPanStartingHeight: CGFloat = 0
+
+    @objc private func panAttachmentView(_ panGestureRecognizer: UIPanGestureRecognizer) {
+        NSLog("\(panGestureRecognizer) \(panGestureRecognizer.state)")
+
+        if panGestureRecognizer.state == .began {
+            // Save starting height when the gesture begins.
+            attachmentViewPanStartingHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+
+            return
+        }
+
+        if panGestureRecognizer.state == .cancelled {
+            // If the gesture is cancelled, animate back to the starting position.
+            attachmentViewHeightConstraint?.constant = attachmentViewPanStartingHeight
+            animatePanGestureLayoutChange()
+
+            return
+        }
+
+        let minimumHeight = attachmentViewInitialHeight
+        let maximumHeight = view.frame.size.height - 200
+
+        if panGestureRecognizer.state == .ended {
+            let currentHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+            let newHeight: CGFloat
+            if currentHeight > attachmentViewPanStartingHeight + 200 {
+                // User has swiped up more than 200 points. Expand.
+                newHeight = maximumHeight
+            } else if currentHeight < attachmentViewPanStartingHeight - 200 {
+                // User has swiped down more than 200 points. Collapse
+                newHeight = minimumHeight
+            } else {
+                // Cancel the swipe.
+                newHeight = attachmentViewPanStartingHeight
+            }
+
+            attachmentViewHeightConstraint?.constant = newHeight
+            animatePanGestureLayoutChange()
+
+            return
+        }
+
+        guard panGestureRecognizer.state == .changed else {
+            return
+        }
+
+        let translation = panGestureRecognizer.translation(in: view)
+        var newHeight = attachmentViewPanStartingHeight + translation.y
+        if newHeight < minimumHeight {
+            newHeight = minimumHeight
+        } else if newHeight > maximumHeight {
+            newHeight = maximumHeight
+        }
+
+        attachmentViewHeightConstraint?.constant = newHeight
+        animatePanGestureLayoutChange()
+    }
+
+    private func animatePanGestureLayoutChange() {
+        UIView.animate(withDuration: 1) { [weak self] in
+            self?.view.layoutIfNeeded()
+        }
     }
 
     @objc private func refresh() {
@@ -345,6 +466,23 @@ class MapViewController: UIViewController {
         items.append(locateMeBarButtonItem)
 
         toolbar?.setItems(items, animated: false)
+    }
+
+    private func makeAttachmentView() -> UIView {
+        let attachmentView = UIView(frame: .zero)
+        attachmentView.translatesAutoresizingMaskIntoConstraints = false
+        attachmentView.backgroundColor = .green
+
+        let label = UILabel(frame: .zero)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "hello"
+        attachmentView.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: attachmentView.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: attachmentView.centerYAnchor),
+            ])
+
+        return attachmentView
     }
 
     @objc private func showInfo() {
