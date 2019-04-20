@@ -21,6 +21,7 @@ class MapViewController: UIViewController {
     // This is computed at runtime from to account for the safe area.
     private var drawerViewInitialHeight: CGFloat = 0
     private var drawerView: UIView?
+    private var drawerViewEnableLocationAccessButton: UIButton?
     private var drawerViewTopAnchorConstraint: NSLayoutConstraint?
     private var drawerViewPanStartingHeight: CGFloat = 0
 
@@ -52,16 +53,18 @@ class MapViewController: UIViewController {
 
         mapView.showsUserLocation = true
 
-        /*
+
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locateMeWhenAuthorized()
+            drawerViewEnableLocationAccessButton?.isHidden = true
+        } else {
+            drawerViewEnableLocationAccessButton?.isHidden = false
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
 
         refresh()
- */
     }
 
     @objc private func refresh() {
@@ -206,6 +209,7 @@ class MapViewController: UIViewController {
             locateMeWhenAuthorized()
 
         case .notDetermined:
+            didRequestLocation = true
             locationManager?.requestWhenInUseAuthorization()
 
         case .denied, .restricted:
@@ -326,12 +330,6 @@ class MapViewController: UIViewController {
             }
         }
 
-        let infoButton = UIButton(type: .infoLight)
-        infoButton.translatesAutoresizingMaskIntoConstraints = false
-        infoButton.addTarget(self, action: #selector(showInfo), for: .touchUpInside)
-
-        let infoBarButtonItem = UIBarButtonItem(customView: infoButton)
-
         let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(maybeLocateMe))
 
         var items = [UIBarButtonItem]()
@@ -339,10 +337,6 @@ class MapViewController: UIViewController {
             items.append(leftMostBarButtonItem)
         }
         items.append(UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil))
-        items.append(infoBarButtonItem)
-        let fixedSpace = UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil)
-        fixedSpace.width = 15
-        items.append(fixedSpace)
         items.append(locateMeBarButtonItem)
 
         toolbar?.setItems(items, animated: false)
@@ -352,12 +346,12 @@ class MapViewController: UIViewController {
         let drawerView = UIView(frame: .zero)
         drawerView.translatesAutoresizingMaskIntoConstraints = false
 
-        drawerView.layer.cornerRadius = 10
-        drawerView.clipsToBounds = true
+        drawerView.layer.shadowColor = UIColor.lightGray.cgColor
+        drawerView.layer.shadowOpacity = 0.3
 
         if !UIAccessibility.isReduceTransparencyEnabled {
-            let blurVisualEffect = UIBlurEffect(style: .extraLight)
-            let blurVisualEffectView = UIVisualEffectView(effect: blurVisualEffect)
+            let blurEffect = UIBlurEffect(style: .regular)
+            let blurVisualEffectView = UIVisualEffectView(effect: blurEffect)
             blurVisualEffectView.translatesAutoresizingMaskIntoConstraints = false
             drawerView.addSubview(blurVisualEffectView)
             NSLayoutConstraint.activate([
@@ -413,37 +407,39 @@ class MapViewController: UIViewController {
         descriptionLabel.adjustsFontForContentSizeCategory = true
         descriptionLabel.numberOfLines = 0
         descriptionLabel.font = .preferredFont(forTextStyle: .body)
-        descriptionLabel.textAlignment = .center
         descriptionLabel.text = NSLocalizedString("info_description", comment: "")
+
+        let enableLocationAccessButton = UIButton(type: .system)
+        self.drawerViewEnableLocationAccessButton = enableLocationAccessButton
+        enableLocationAccessButton.translatesAutoresizingMaskIntoConstraints = false
+        enableLocationAccessButton.setTitle(NSLocalizedString("info_enable_location_access", comment: ""), for: .normal)
+        enableLocationAccessButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        enableLocationAccessButton.addTarget(self, action: #selector(maybeLocateMe), for: .touchUpInside)
 
         let cityBikeWebsiteButton = UIButton(type: .system)
         cityBikeWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
-        cityBikeWebsiteButton.setTitle( NSLocalizedString("info_helsinki_city_bike_website", comment: ""), for: .normal)
+        cityBikeWebsiteButton.setTitle(NSLocalizedString("info_helsinki_city_bike_website", comment: ""), for: .normal)
         cityBikeWebsiteButton.titleLabel?.adjustsFontSizeToFitWidth = true
         cityBikeWebsiteButton.addTarget(self, action: #selector(openCityBikeWebsite), for: .touchUpInside)
 
         let appWebsiteButton = UIButton(type: .system)
         appWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
-        appWebsiteButton.setTitle( NSLocalizedString("info_app_website", comment: ""), for: .normal)
+        appWebsiteButton.setTitle(NSLocalizedString("info_app_website", comment: ""), for: .normal)
         appWebsiteButton.titleLabel?.adjustsFontSizeToFitWidth = true
         appWebsiteButton.addTarget(self, action: #selector(openAppWebsite), for: .touchUpInside)
 
-        let stackView = UIStackView(arrangedSubviews: [
-            descriptionLabel,
-            cityBikeWebsiteButton,
-            appWebsiteButton
-            ])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.spacing = 20
-        stackView.axis = .vertical
-        stackView.alignment = .center
+        let widgetTipLabel = UILabel(frame: .zero)
+        widgetTipLabel.translatesAutoresizingMaskIntoConstraints = false
+        widgetTipLabel.adjustsFontForContentSizeCategory = true
+        widgetTipLabel.numberOfLines = 0
+        widgetTipLabel.font = .preferredFont(forTextStyle: .callout)
+        widgetTipLabel.text = NSLocalizedString("info_widget_tip", comment: "")
 
-        drawerView.addSubview(stackView)
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: 100),
-            stackView.leadingAnchor.constraint(equalToSystemSpacingAfter: drawerView.leadingAnchor, multiplier: 1),
-            drawerView.trailingAnchor.constraint(equalToSystemSpacingAfter: stackView.trailingAnchor, multiplier: 1)
-            ])
+        let widgetExampleImage = UIImage(imageLiteralResourceName: "WidgetExample")
+        let widgetExampleImageView = UIImageView(image: widgetExampleImage)
+        widgetExampleImageView.translatesAutoresizingMaskIntoConstraints = false
+        widgetExampleImageView.contentMode = .scaleAspectFit
+        widgetExampleImageView.alpha = 0.8
 
         let footerLabel = UILabel(frame: .zero)
         footerLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -451,11 +447,38 @@ class MapViewController: UIViewController {
         footerLabel.font = .preferredFont(forTextStyle: .footnote)
         footerLabel.adjustsFontSizeToFitWidth = true
         footerLabel.text = NSLocalizedString("info_footer", comment: "")
+        footerLabel.textColor = .darkText
 
-        drawerView.addSubview(footerLabel)
+        let stackView = UIStackView(arrangedSubviews: [
+            descriptionLabel,
+            enableLocationAccessButton,
+            cityBikeWebsiteButton,
+            appWebsiteButton,
+            widgetTipLabel,
+            widgetExampleImageView,
+            footerLabel
+            ])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.alignment = .center
+
+        stackView.spacing = 4
+        stackView.setCustomSpacing(32, after: appWebsiteButton)
+        stackView.setCustomSpacing(8, after: widgetTipLabel)
+        stackView.setCustomSpacing(32, after: widgetExampleImageView)
+
+        drawerView.addSubview(stackView)
         NSLayoutConstraint.activate([
-            footerLabel.centerXAnchor.constraint(equalTo: drawerView.centerXAnchor),
-            footerLabel.bottomAnchor.constraint(equalTo: drawerView.readableContentGuide.bottomAnchor),
+            descriptionLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor),
+            widgetTipLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor),
+            widgetExampleImageView.widthAnchor.constraint(equalTo: stackView.widthAnchor),
+
+            stackView.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: 48),
+            stackView.leadingAnchor.constraint(equalToSystemSpacingAfter: drawerView.leadingAnchor, multiplier: 1),
+            drawerView.trailingAnchor.constraint(equalToSystemSpacingAfter: stackView.trailingAnchor, multiplier: 1),
+
+            // Without an explicit constraint the image view has extraneous height
+            widgetExampleImageView.widthAnchor.constraint(equalTo: widgetExampleImageView.heightAnchor, multiplier: 2.5),
             ])
 
         self.drawerView = drawerView
@@ -546,8 +569,7 @@ class MapViewController: UIViewController {
         let minimumHeight = drawerViewInitialHeight
         var maximumHeight = minimumHeight
         if let drawerHeight = drawerView?.frame.size.height {
-            // Keep some margin to account for the spring bounce, and also
-            // to keep the lower rounded corners of the drawer view hidden.
+            // Keep some margin to account for the spring bounce.
             maximumHeight = drawerHeight * 0.9
         }
 
@@ -586,29 +608,6 @@ class MapViewController: UIViewController {
         drawerViewTopAnchorConstraint?.constant = newHeight
     }
 
-    @objc private func showInfo() {
-        let title = NSLocalizedString("info_action_sheet_title", comment: "")
-        let message = NSLocalizedString("info_action_sheet_message", comment: "")
-
-        let websiteTitle = NSLocalizedString("info_action_sheet_city_bike_website", comment: "")
-        let requestAFeatureTitle = NSLocalizedString("Request a Feature", comment: "")
-        let okayTitle = NSLocalizedString("info_action_sheet_okay", comment: "")
-
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
-
-        alertController.addAction(UIAlertAction(title: websiteTitle, style: .default, handler: { [weak self] _ in
-            self?.openCityBikeWebsite()
-        }))
-
-        alertController.addAction(UIAlertAction(title: requestAFeatureTitle, style: .default, handler: { [weak self] _ in
-            self?.requestAFeature()
-        }))
-
-        alertController.addAction(UIAlertAction(title: okayTitle, style: .cancel, handler: nil))
-
-        present(alertController, animated: true)
-    }
-
     @objc private func openCityBikeWebsite() {
         let websiteURLString = NSLocalizedString("info_helsinki_city_bike_website_url", comment: "")
         if let url = URL(string: websiteURLString) {
@@ -618,15 +617,6 @@ class MapViewController: UIViewController {
 
     @objc private func openAppWebsite() {
         if let url = URL(string: "https://github.com/mnvr/bikes") {
-            UIApplication.shared.open(url)
-        }
-    }
-
-    // TODO: Delete me
-    private func requestAFeature() {
-        // The website title is also the URL of the website, and it is
-        // different for each localization.
-        if let url = URL(string: "https://github.com/mnvr/bikes/issues") {
             UIApplication.shared.open(url)
         }
     }
@@ -713,8 +703,12 @@ extension MapViewController: CLLocationManagerDelegate {
             // - Said yes on the OS prompt
             // - We come here
             // So now do what they want.
+
+            drawerViewEnableLocationAccessButton?.isHidden = true
             locateMeWhenAuthorized()
+
         default:
+            drawerViewEnableLocationAccessButton?.isHidden = false
             break
         }
     }
