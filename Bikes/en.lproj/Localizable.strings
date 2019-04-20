@@ -11,5 +11,5 @@
 /* Different URLs for FI, SV, EN */
 "info_helsinki_city_bike_website_url" = "https://kaupunkipyorat.hsl.fi/en";
 "info_app_website" = "App Website";
-"info_widget_tip" = "Tip: Add the app's widget to your Search screen for quick access.";
+"info_widget_tip" = "Tip: Add the app's widget to your Today view for quick access.";
 "info_footer" = "Made with ❤️ in Helsinki";
