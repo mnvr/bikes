@@ -122,7 +122,21 @@ class MapViewController: UIViewController {
     private var attachmentViewPanStartingHeight: CGFloat = 0
 
     @objc private func panAttachmentView(_ panGestureRecognizer: UIPanGestureRecognizer) {
-        NSLog("\(panGestureRecognizer) \(panGestureRecognizer.state)")
+        func animateHeightChange(_ newHeight: CGFloat) {
+            // Convert pan gesture recognizer velocity (expressed in points
+            // per second) to the animation velocity (expressed as the
+            // animation distance travelled per second).
+            let gestureDistancePerSecond = abs(panGestureRecognizer.velocity(in: view).y)
+            let currentHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+            let distanceToTravel = abs(newHeight - currentHeight)
+            let animationDistancePerSecond = distanceToTravel / gestureDistancePerSecond
+            let initialSpringVelocity = animationDistancePerSecond
+
+            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: initialSpringVelocity, options: [.beginFromCurrentState], animations: { [weak self] in
+                self?.attachmentViewHeightConstraint?.constant = newHeight
+                self?.view.layoutIfNeeded()
+            }, completion: nil)
+        }
 
         if panGestureRecognizer.state == .began {
             // Save starting height when the gesture begins.
@@ -133,31 +147,30 @@ class MapViewController: UIViewController {
 
         if panGestureRecognizer.state == .cancelled {
             // If the gesture is cancelled, animate back to the starting position.
-            attachmentViewHeightConstraint?.constant = attachmentViewPanStartingHeight
-            animatePanGestureLayoutChange()
+            animateHeightChange(attachmentViewPanStartingHeight)
 
             return
         }
 
         let minimumHeight = attachmentViewInitialHeight
-        let maximumHeight = view.frame.size.height - 200
+        let maximumHeight = view.frame.size.height - attachmentViewInitialHeight
 
         if panGestureRecognizer.state == .ended {
+            let threshold: CGFloat = 75
             let currentHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
             let newHeight: CGFloat
-            if currentHeight > attachmentViewPanStartingHeight + 200 {
-                // User has swiped up more than 200 points. Expand.
+            if currentHeight > attachmentViewPanStartingHeight + threshold {
+                // User has swiped up more than some threshold. Expand.
                 newHeight = maximumHeight
-            } else if currentHeight < attachmentViewPanStartingHeight - 200 {
-                // User has swiped down more than 200 points. Collapse
+            } else if currentHeight < attachmentViewPanStartingHeight - threshold {
+                // User has swiped down more than some threshold. Collapse
                 newHeight = minimumHeight
             } else {
                 // Cancel the swipe.
                 newHeight = attachmentViewPanStartingHeight
             }
 
-            attachmentViewHeightConstraint?.constant = newHeight
-            animatePanGestureLayoutChange()
+            animateHeightChange(newHeight)
 
             return
         }
@@ -167,7 +180,7 @@ class MapViewController: UIViewController {
         }
 
         let translation = panGestureRecognizer.translation(in: view)
-        var newHeight = attachmentViewPanStartingHeight + translation.y
+        var newHeight = attachmentViewPanStartingHeight - translation.y
         if newHeight < minimumHeight {
             newHeight = minimumHeight
         } else if newHeight > maximumHeight {
@@ -175,13 +188,6 @@ class MapViewController: UIViewController {
         }
 
         attachmentViewHeightConstraint?.constant = newHeight
-        animatePanGestureLayoutChange()
-    }
-
-    private func animatePanGestureLayoutChange() {
-        UIView.animate(withDuration: 1) { [weak self] in
-            self?.view.layoutIfNeeded()
-        }
     }
 
     @objc private func refresh() {
