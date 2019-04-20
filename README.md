@@ -2,10 +2,10 @@
 
 An iOS app to list the Helsinki city bikes near your location.
 
+<img src="Artwork/Screenshot.png" width="622" alt="Screenshots of the App"/>
+
 The app lists the information on a map. There is also a Today widget
 to quickly see the status of the nearest three stations.
-
-<img src="Artwork/Screenshot.png" width="622" alt="Screenshots of the App"/>
 
 Note that this is a third party app, and is not affiliated with HSL or
 the City Bike service.
