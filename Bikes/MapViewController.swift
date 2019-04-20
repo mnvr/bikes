@@ -43,31 +43,8 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
-        let drawerView = makeDrawerView()
-        self.drawerView = drawerView
 
-        view.addSubview(drawerView)
-        NSLayoutConstraint.activate([
-            drawerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: drawerView.trailingAnchor),
-            // To ensure that the content in the drawer is not squashed
-            // when it is collapsed, create a fixed height constraint
-            // for the drawer, and instead animate its topAnchor using
-            // the drawerViewTopAnchorConstraint.
-            drawerView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.9),
-            ])
-
-        // Tell UIKit about the initial height of the attachment view so
-        // that the map view moves the "Legal" label at the bottom above
-        // the initial height of the attachment view.
-        additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: drawerViewInitialContentHeight, right: 0)
-
-        drawerViewInitialHeight = drawerViewInitialContentHeight
-        drawerViewTopAnchorConstraint = view.bottomAnchor.constraint(equalTo: drawerView.topAnchor, constant: drawerViewInitialHeight)
-        drawerViewTopAnchorConstraint?.isActive = true
-
-        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panDrawerView))
-        drawerView.addGestureRecognizer(panGestureRecognizer)
+        createDrawerView()
 
         let locationManager = CLLocationManager()
         self.locationManager = locationManager
@@ -85,108 +62,6 @@ class MapViewController: UIViewController {
 
         refresh()
  */
-    }
-
-    override func viewSafeAreaInsetsDidChange() {
-        super.viewSafeAreaInsetsDidChange()
-
-        // Increase the height of the attachment view to account for the
-        // safe area, if any. We cannot pin to the safe area layout guide
-        // because we want the attachment view to extend into the safe
-        // area, though it should not have any content in the safe area.
-        //
-        // The safe area insets are zero in viewDidLoad. They become
-        // valid in viewSafeAreaInsetsDidChange.
-        //
-        // Note that this method might be called multiple times. If
-        // it is called after the user has swiped up to reveal the
-        // attachment view, then the attachment view would collapse
-        // again, but currently I can't think of a scenario where
-        // that would happen, so no safeguards against that.
-
-        let bottomSafeAreaInset = view.safeAreaInsets.bottom
-        // This should be something like
-        // drawerViewInitialHeight = drawerViewInitialContentHeight + bottomSafeAreaInset
-        // but we've already added drawerViewInitialContentHeight to
-        // the additional safe area insets in view did load, so now
-        // the bottom safe inset already includes that.
-        drawerViewInitialHeight = bottomSafeAreaInset
-
-        drawerViewTopAnchorConstraint?.constant = drawerViewInitialHeight
-    }
-
-    @objc private func panDrawerView(_ panGestureRecognizer: UIPanGestureRecognizer) {
-        func animateHeightChange(_ newHeight: CGFloat) {
-            // Convert pan gesture recognizer velocity (expressed in points
-            // per second) to the animation velocity (expressed as the
-            // animation distance travelled per second).
-            let gestureDistancePerSecond = panGestureRecognizer.velocity(in: view).y
-            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
-            let distanceToTravel = newHeight - currentHeight
-            let animationDistancePerSecond = gestureDistancePerSecond / distanceToTravel
-            let initialSpringVelocity = abs(animationDistancePerSecond)
-
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: initialSpringVelocity, options: [], animations: { [weak self] in
-                self?.drawerViewTopAnchorConstraint?.constant = newHeight
-                self?.view.layoutIfNeeded()
-            }, completion: nil)
-        }
-
-        if panGestureRecognizer.state == .began {
-            // Save starting height when the gesture begins.
-            drawerViewPanStartingHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
-
-            return
-        }
-
-        if panGestureRecognizer.state == .cancelled {
-            // If the gesture is cancelled, animate back to the starting position.
-            animateHeightChange(drawerViewPanStartingHeight)
-
-            return
-        }
-
-        let minimumHeight = drawerViewInitialHeight
-        var maximumHeight = minimumHeight
-        if let drawerHeight = drawerView?.frame.size.height {
-            // Keep some margin to account for the spring bounce, and also
-            // to keep the lower rounded corners of the drawer view hidden.
-            maximumHeight = drawerHeight * 0.9
-        }
-
-        if panGestureRecognizer.state == .ended {
-            let threshold: CGFloat = 75
-            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
-            let newHeight: CGFloat
-            if currentHeight > drawerViewPanStartingHeight + threshold {
-                // User has swiped up more than some threshold. Expand.
-                newHeight = maximumHeight
-            } else if currentHeight < drawerViewPanStartingHeight - threshold {
-                // User has swiped down more than some threshold. Collapse
-                newHeight = minimumHeight
-            } else {
-                // Cancel the swipe.
-                newHeight = drawerViewPanStartingHeight
-            }
-
-            animateHeightChange(newHeight)
-
-            return
-        }
-
-        guard panGestureRecognizer.state == .changed else {
-            return
-        }
-
-        let translation = panGestureRecognizer.translation(in: view)
-        var newHeight = drawerViewPanStartingHeight - translation.y
-        if newHeight < minimumHeight {
-            newHeight = minimumHeight
-        } else if newHeight > maximumHeight {
-            newHeight = maximumHeight
-        }
-
-        drawerViewTopAnchorConstraint?.constant = newHeight
     }
 
     @objc private func refresh() {
@@ -473,7 +348,7 @@ class MapViewController: UIViewController {
         toolbar?.setItems(items, animated: false)
     }
 
-    private func makeDrawerView() -> UIView {
+    private func createDrawerView() {
         let drawerView = UIView(frame: .zero)
         drawerView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -533,16 +408,182 @@ class MapViewController: UIViewController {
 
         handleView.layer.cornerRadius = 2.5
 
-        let label = UILabel(frame: .zero)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "hello"
-        drawerView.addSubview(label)
+        let descriptionLabel = UILabel(frame: .zero)
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        descriptionLabel.adjustsFontForContentSizeCategory = true
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.font = .preferredFont(forTextStyle: .body)
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.text = NSLocalizedString("info_description", comment: "")
+
+        let cityBikeWebsiteButton = UIButton(type: .system)
+        cityBikeWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
+        cityBikeWebsiteButton.setTitle( NSLocalizedString("info_helsinki_city_bike_website", comment: ""), for: .normal)
+        cityBikeWebsiteButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        cityBikeWebsiteButton.addTarget(self, action: #selector(openCityBikeWebsite), for: .touchUpInside)
+
+        let appWebsiteButton = UIButton(type: .system)
+        appWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
+        appWebsiteButton.setTitle( NSLocalizedString("info_app_website", comment: ""), for: .normal)
+        appWebsiteButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        appWebsiteButton.addTarget(self, action: #selector(openAppWebsite), for: .touchUpInside)
+
+        let stackView = UIStackView(arrangedSubviews: [
+            descriptionLabel,
+            cityBikeWebsiteButton,
+            appWebsiteButton
+            ])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.spacing = 20
+        stackView.axis = .vertical
+        stackView.alignment = .center
+
+        drawerView.addSubview(stackView)
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: drawerView.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: drawerView.centerYAnchor),
+            stackView.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: 100),
+            stackView.leadingAnchor.constraint(equalToSystemSpacingAfter: drawerView.leadingAnchor, multiplier: 1),
+            drawerView.trailingAnchor.constraint(equalToSystemSpacingAfter: stackView.trailingAnchor, multiplier: 1)
             ])
 
-        return drawerView
+        let footerLabel = UILabel(frame: .zero)
+        footerLabel.translatesAutoresizingMaskIntoConstraints = false
+        footerLabel.adjustsFontForContentSizeCategory = true
+        footerLabel.font = .preferredFont(forTextStyle: .footnote)
+        footerLabel.adjustsFontSizeToFitWidth = true
+        footerLabel.text = NSLocalizedString("info_footer", comment: "")
+
+        drawerView.addSubview(footerLabel)
+        NSLayoutConstraint.activate([
+            footerLabel.centerXAnchor.constraint(equalTo: drawerView.centerXAnchor),
+            footerLabel.bottomAnchor.constraint(equalTo: drawerView.readableContentGuide.bottomAnchor),
+            ])
+
+        self.drawerView = drawerView
+
+        view.addSubview(drawerView)
+        NSLayoutConstraint.activate([
+            drawerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: drawerView.trailingAnchor),
+            // To ensure that the content in the drawer is not squashed
+            // when it is collapsed, create a fixed height constraint
+            // for the drawer, and instead animate its topAnchor using
+            // the drawerViewTopAnchorConstraint.
+            drawerView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.9),
+            ])
+
+        // Tell UIKit about the initial height of the attachment view so
+        // that the map view moves the "Legal" label at the bottom above
+        // the initial height of the attachment view.
+        additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: drawerViewInitialContentHeight, right: 0)
+
+        drawerViewInitialHeight = drawerViewInitialContentHeight
+        drawerViewTopAnchorConstraint = view.bottomAnchor.constraint(equalTo: drawerView.topAnchor, constant: drawerViewInitialHeight)
+        drawerViewTopAnchorConstraint?.isActive = true
+
+        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panDrawerView))
+        drawerView.addGestureRecognizer(panGestureRecognizer)
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+
+        // Increase the height of the attachment view to account for the
+        // safe area, if any. We cannot pin to the safe area layout guide
+        // because we want the attachment view to extend into the safe
+        // area, though it should not have any content in the safe area.
+        //
+        // The safe area insets are zero in viewDidLoad. They become
+        // valid in viewSafeAreaInsetsDidChange.
+        //
+        // Note that this method might be called multiple times. If
+        // it is called after the user has swiped up to reveal the
+        // attachment view, then the attachment view would collapse
+        // again, but currently I can't think of a scenario where
+        // that would happen, so no safeguards against that.
+
+        let bottomSafeAreaInset = view.safeAreaInsets.bottom
+        // This should be something like
+        // drawerViewInitialHeight = drawerViewInitialContentHeight + bottomSafeAreaInset
+        // but we've already added drawerViewInitialContentHeight to
+        // the additional safe area insets in view did load, so now
+        // the bottom safe inset already includes that.
+        drawerViewInitialHeight = bottomSafeAreaInset
+
+        drawerViewTopAnchorConstraint?.constant = drawerViewInitialHeight
+    }
+
+    @objc private func panDrawerView(_ panGestureRecognizer: UIPanGestureRecognizer) {
+        func animateHeightChange(_ newHeight: CGFloat) {
+            // Convert pan gesture recognizer velocity (expressed in points
+            // per second) to the animation velocity (expressed as the
+            // animation distance travelled per second).
+            let gestureDistancePerSecond = panGestureRecognizer.velocity(in: view).y
+            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
+            let distanceToTravel = newHeight - currentHeight
+            let animationDistancePerSecond = gestureDistancePerSecond / distanceToTravel
+            let initialSpringVelocity = abs(animationDistancePerSecond)
+
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: initialSpringVelocity, options: [], animations: { [weak self] in
+                self?.drawerViewTopAnchorConstraint?.constant = newHeight
+                self?.view.layoutIfNeeded()
+                }, completion: nil)
+        }
+
+        if panGestureRecognizer.state == .began {
+            // Save starting height when the gesture begins.
+            drawerViewPanStartingHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
+
+            return
+        }
+
+        if panGestureRecognizer.state == .cancelled {
+            // If the gesture is cancelled, animate back to the starting position.
+            animateHeightChange(drawerViewPanStartingHeight)
+
+            return
+        }
+
+        let minimumHeight = drawerViewInitialHeight
+        var maximumHeight = minimumHeight
+        if let drawerHeight = drawerView?.frame.size.height {
+            // Keep some margin to account for the spring bounce, and also
+            // to keep the lower rounded corners of the drawer view hidden.
+            maximumHeight = drawerHeight * 0.9
+        }
+
+        if panGestureRecognizer.state == .ended {
+            let threshold: CGFloat = 75
+            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
+            let newHeight: CGFloat
+            if currentHeight > drawerViewPanStartingHeight + threshold {
+                // User has swiped up more than some threshold. Expand.
+                newHeight = maximumHeight
+            } else if currentHeight < drawerViewPanStartingHeight - threshold {
+                // User has swiped down more than some threshold. Collapse
+                newHeight = minimumHeight
+            } else {
+                // Cancel the swipe.
+                newHeight = drawerViewPanStartingHeight
+            }
+
+            animateHeightChange(newHeight)
+
+            return
+        }
+
+        guard panGestureRecognizer.state == .changed else {
+            return
+        }
+
+        let translation = panGestureRecognizer.translation(in: view)
+        var newHeight = drawerViewPanStartingHeight - translation.y
+        if newHeight < minimumHeight {
+            newHeight = minimumHeight
+        } else if newHeight > maximumHeight {
+            newHeight = maximumHeight
+        }
+
+        drawerViewTopAnchorConstraint?.constant = newHeight
     }
 
     @objc private func showInfo() {
@@ -568,15 +609,20 @@ class MapViewController: UIViewController {
         present(alertController, animated: true)
     }
 
-    private func openCityBikeWebsite() {
-        // The website title is also the URL of the website, and it is
-        // different for each localization.
-        let websiteURLString = NSLocalizedString("info_action_sheet_city_bike_website", comment: "")
+    @objc private func openCityBikeWebsite() {
+        let websiteURLString = NSLocalizedString("info_helsinki_city_bike_website_url", comment: "")
         if let url = URL(string: websiteURLString) {
             UIApplication.shared.open(url)
         }
     }
 
+    @objc private func openAppWebsite() {
+        if let url = URL(string: "https://github.com/mnvr/bikes") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    // TODO: Delete me
     private func requestAFeature() {
         // The website title is also the URL of the website, and it is
         // different for each localization.
