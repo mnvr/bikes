@@ -68,18 +68,7 @@ class MapViewController: UIViewController {
 
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panDrawerView))
         drawerView.addGestureRecognizer(panGestureRecognizer)
-/*
-        let toolbar = UIToolbar(frame: .zero)
-        self.toolbar = toolbar
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(toolbar)
-        NSLayoutConstraint.activate([
-            toolbar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor),
-            view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: toolbar.bottomAnchor)
-            ])
 
-*/
         let locationManager = CLLocationManager()
         self.locationManager = locationManager
         locationManager.delegate = self
@@ -131,13 +120,13 @@ class MapViewController: UIViewController {
             // Convert pan gesture recognizer velocity (expressed in points
             // per second) to the animation velocity (expressed as the
             // animation distance travelled per second).
-            let gestureDistancePerSecond = abs(panGestureRecognizer.velocity(in: view).y)
+            let gestureDistancePerSecond = panGestureRecognizer.velocity(in: view).y
             let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
-            let distanceToTravel = abs(newHeight - currentHeight)
-            let animationDistancePerSecond = distanceToTravel / gestureDistancePerSecond
-            let initialSpringVelocity = animationDistancePerSecond
+            let distanceToTravel = newHeight - currentHeight
+            let animationDistancePerSecond = gestureDistancePerSecond / distanceToTravel
+            let initialSpringVelocity = abs(animationDistancePerSecond)
 
-            UIView.animate(withDuration: 0.66, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: initialSpringVelocity, options: [], animations: { [weak self] in
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: initialSpringVelocity, options: [], animations: { [weak self] in
                 self?.drawerViewTopAnchorConstraint?.constant = newHeight
                 self?.view.layoutIfNeeded()
             }, completion: nil)
@@ -160,7 +149,8 @@ class MapViewController: UIViewController {
         let minimumHeight = drawerViewInitialHeight
         var maximumHeight = minimumHeight
         if let drawerHeight = drawerView?.frame.size.height {
-            // Keep some margin to account for the spring bounce.
+            // Keep some margin to account for the spring bounce, and also
+            // to keep the lower rounded corners of the drawer view hidden.
             maximumHeight = drawerHeight * 0.9
         }
 
@@ -486,7 +476,62 @@ class MapViewController: UIViewController {
     private func makeDrawerView() -> UIView {
         let drawerView = UIView(frame: .zero)
         drawerView.translatesAutoresizingMaskIntoConstraints = false
-        drawerView.backgroundColor = .green
+
+        drawerView.layer.cornerRadius = 10
+        drawerView.clipsToBounds = true
+
+        if !UIAccessibility.isReduceTransparencyEnabled {
+            let blurVisualEffect = UIBlurEffect(style: .extraLight)
+            let blurVisualEffectView = UIVisualEffectView(effect: blurVisualEffect)
+            blurVisualEffectView.translatesAutoresizingMaskIntoConstraints = false
+            drawerView.addSubview(blurVisualEffectView)
+            NSLayoutConstraint.activate([
+                blurVisualEffectView.topAnchor.constraint(equalTo: drawerView.topAnchor),
+                blurVisualEffectView.leadingAnchor.constraint(equalTo: drawerView.leadingAnchor),
+                drawerView.trailingAnchor.constraint(equalTo: blurVisualEffectView.trailingAnchor),
+                drawerView.bottomAnchor.constraint(equalTo: blurVisualEffectView.bottomAnchor)
+                ])
+        } else {
+            drawerView.backgroundColor = .white
+        }
+
+        let toolbar = UIToolbar(frame: .zero)
+        self.toolbar = toolbar
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+
+        // We add our own blur to the drawer but UIToolbar does its own
+        // blur by default too, which is slightly different from the
+        // various blurs we get by using UIBlurEffect.
+        //
+        // Disable the UIToolbar blurring by setting its background to
+        // a transparent 1x1 image.
+
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1))
+        let image = renderer.image { (context) in
+            UIColor.clear.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
+        toolbar.setBackgroundImage(image, forToolbarPosition: .any, barMetrics: .default)
+
+        drawerView.addSubview(toolbar)
+        NSLayoutConstraint.activate([
+            toolbar.leadingAnchor.constraint(equalTo: drawerView.leadingAnchor),
+            drawerView.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor),
+            toolbar.topAnchor.constraint(equalTo: drawerView.topAnchor)
+         ])
+
+        let handleView = UIView(frame: .zero)
+        handleView.translatesAutoresizingMaskIntoConstraints = false
+        handleView.backgroundColor = .lightGray
+        drawerView.addSubview(handleView)
+        NSLayoutConstraint.activate([
+            handleView.topAnchor.constraint(equalTo: drawerView.topAnchor, constant: 10),
+            handleView.widthAnchor.constraint(equalTo: drawerView.widthAnchor, multiplier: 0.15),
+            handleView.centerXAnchor.constraint(equalTo: drawerView.centerXAnchor),
+            handleView.heightAnchor.constraint(equalToConstant: 5)
+            ])
+
+        handleView.layer.cornerRadius = 2.5
 
         let label = UILabel(frame: .zero)
         label.translatesAutoresizingMaskIntoConstraints = false
