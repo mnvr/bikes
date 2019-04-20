@@ -17,6 +17,12 @@ class MapViewController: UIViewController {
     private var isAPIRequestInProgress = false
     private var lastSuccessfulAPIRequestCompletionDate: Date?
     private var lastPlacedAnnotations = [MKAnnotation]()
+    private let drawerViewInitialContentHeight: CGFloat = 44
+    // This is computed at runtime from to account for the safe area.
+    private var drawerViewInitialHeight: CGFloat = 0
+    private var drawerView: UIView?
+    private var drawerViewTopAnchorConstraint: NSLayoutConstraint?
+    private var drawerViewPanStartingHeight: CGFloat = 0
 
     let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
@@ -37,26 +43,31 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
-        let attachmentView = makeAttachmentView()
+        let drawerView = makeDrawerView()
+        self.drawerView = drawerView
 
-        view.addSubview(attachmentView)
+        view.addSubview(drawerView)
         NSLayoutConstraint.activate([
-            attachmentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: attachmentView.trailingAnchor),
-            view.bottomAnchor.constraint(equalTo: attachmentView.bottomAnchor),
+            drawerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: drawerView.trailingAnchor),
+            // To ensure that the content in the drawer is not squashed
+            // when it is collapsed, create a fixed height constraint
+            // for the drawer, and instead animate its topAnchor using
+            // the drawerViewTopAnchorConstraint.
+            drawerView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.9),
             ])
 
         // Tell UIKit about the initial height of the attachment view so
         // that the map view moves the "Legal" label at the bottom above
         // the initial height of the attachment view.
-        additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: attachmentViewInitialContentHeight, right: 0)
+        additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: drawerViewInitialContentHeight, right: 0)
 
-        attachmentViewInitialHeight = attachmentViewInitialContentHeight
-        attachmentViewHeightConstraint = attachmentView.heightAnchor.constraint(equalToConstant: attachmentViewInitialHeight)
-        attachmentViewHeightConstraint?.isActive = true
+        drawerViewInitialHeight = drawerViewInitialContentHeight
+        drawerViewTopAnchorConstraint = view.bottomAnchor.constraint(equalTo: drawerView.topAnchor, constant: drawerViewInitialHeight)
+        drawerViewTopAnchorConstraint?.isActive = true
 
-        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panAttachmentView))
-        attachmentView.addGestureRecognizer(panGestureRecognizer)
+        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panDrawerView))
+        drawerView.addGestureRecognizer(panGestureRecognizer)
 /*
         let toolbar = UIToolbar(frame: .zero)
         self.toolbar = toolbar
@@ -106,68 +117,66 @@ class MapViewController: UIViewController {
 
         let bottomSafeAreaInset = view.safeAreaInsets.bottom
         // This should be something like
-        // attachmentViewInitialHeight = attachmentViewInitialContentHeight + bottomSafeAreaInset
-        // but we've already added attachmentViewInitialContentHeight to
+        // drawerViewInitialHeight = drawerViewInitialContentHeight + bottomSafeAreaInset
+        // but we've already added drawerViewInitialContentHeight to
         // the additional safe area insets in view did load, so now
         // the bottom safe inset already includes that.
-        attachmentViewInitialHeight = bottomSafeAreaInset
+        drawerViewInitialHeight = bottomSafeAreaInset
 
-        attachmentViewHeightConstraint?.constant = attachmentViewInitialHeight
+        drawerViewTopAnchorConstraint?.constant = drawerViewInitialHeight
     }
 
-    private var attachmentViewHeightConstraint: NSLayoutConstraint?
-    private let attachmentViewInitialContentHeight: CGFloat = 44
-    // This is computed at runtime from to account for the safe area.
-    private var attachmentViewInitialHeight: CGFloat = 0
-    private var attachmentViewPanStartingHeight: CGFloat = 0
-
-    @objc private func panAttachmentView(_ panGestureRecognizer: UIPanGestureRecognizer) {
+    @objc private func panDrawerView(_ panGestureRecognizer: UIPanGestureRecognizer) {
         func animateHeightChange(_ newHeight: CGFloat) {
             // Convert pan gesture recognizer velocity (expressed in points
             // per second) to the animation velocity (expressed as the
             // animation distance travelled per second).
             let gestureDistancePerSecond = abs(panGestureRecognizer.velocity(in: view).y)
-            let currentHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
             let distanceToTravel = abs(newHeight - currentHeight)
             let animationDistancePerSecond = distanceToTravel / gestureDistancePerSecond
             let initialSpringVelocity = animationDistancePerSecond
 
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: initialSpringVelocity, options: [.beginFromCurrentState], animations: { [weak self] in
-                self?.attachmentViewHeightConstraint?.constant = newHeight
+            UIView.animate(withDuration: 0.66, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: initialSpringVelocity, options: [], animations: { [weak self] in
+                self?.drawerViewTopAnchorConstraint?.constant = newHeight
                 self?.view.layoutIfNeeded()
             }, completion: nil)
         }
 
         if panGestureRecognizer.state == .began {
             // Save starting height when the gesture begins.
-            attachmentViewPanStartingHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+            drawerViewPanStartingHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
 
             return
         }
 
         if panGestureRecognizer.state == .cancelled {
             // If the gesture is cancelled, animate back to the starting position.
-            animateHeightChange(attachmentViewPanStartingHeight)
+            animateHeightChange(drawerViewPanStartingHeight)
 
             return
         }
 
-        let minimumHeight = attachmentViewInitialHeight
-        let maximumHeight = view.frame.size.height - attachmentViewInitialHeight
+        let minimumHeight = drawerViewInitialHeight
+        var maximumHeight = minimumHeight
+        if let drawerHeight = drawerView?.frame.size.height {
+            // Keep some margin to account for the spring bounce.
+            maximumHeight = drawerHeight * 0.9
+        }
 
         if panGestureRecognizer.state == .ended {
             let threshold: CGFloat = 75
-            let currentHeight = attachmentViewHeightConstraint?.constant ?? attachmentViewInitialHeight
+            let currentHeight = drawerViewTopAnchorConstraint?.constant ?? drawerViewInitialHeight
             let newHeight: CGFloat
-            if currentHeight > attachmentViewPanStartingHeight + threshold {
+            if currentHeight > drawerViewPanStartingHeight + threshold {
                 // User has swiped up more than some threshold. Expand.
                 newHeight = maximumHeight
-            } else if currentHeight < attachmentViewPanStartingHeight - threshold {
+            } else if currentHeight < drawerViewPanStartingHeight - threshold {
                 // User has swiped down more than some threshold. Collapse
                 newHeight = minimumHeight
             } else {
                 // Cancel the swipe.
-                newHeight = attachmentViewPanStartingHeight
+                newHeight = drawerViewPanStartingHeight
             }
 
             animateHeightChange(newHeight)
@@ -180,14 +189,14 @@ class MapViewController: UIViewController {
         }
 
         let translation = panGestureRecognizer.translation(in: view)
-        var newHeight = attachmentViewPanStartingHeight - translation.y
+        var newHeight = drawerViewPanStartingHeight - translation.y
         if newHeight < minimumHeight {
             newHeight = minimumHeight
         } else if newHeight > maximumHeight {
             newHeight = maximumHeight
         }
 
-        attachmentViewHeightConstraint?.constant = newHeight
+        drawerViewTopAnchorConstraint?.constant = newHeight
     }
 
     @objc private func refresh() {
@@ -474,21 +483,21 @@ class MapViewController: UIViewController {
         toolbar?.setItems(items, animated: false)
     }
 
-    private func makeAttachmentView() -> UIView {
-        let attachmentView = UIView(frame: .zero)
-        attachmentView.translatesAutoresizingMaskIntoConstraints = false
-        attachmentView.backgroundColor = .green
+    private func makeDrawerView() -> UIView {
+        let drawerView = UIView(frame: .zero)
+        drawerView.translatesAutoresizingMaskIntoConstraints = false
+        drawerView.backgroundColor = .green
 
         let label = UILabel(frame: .zero)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "hello"
-        attachmentView.addSubview(label)
+        drawerView.addSubview(label)
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: attachmentView.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: attachmentView.centerYAnchor),
+            label.centerXAnchor.constraint(equalTo: drawerView.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: drawerView.centerYAnchor),
             ])
 
-        return attachmentView
+        return drawerView
     }
 
     @objc private func showInfo() {
