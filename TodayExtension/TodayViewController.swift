@@ -105,10 +105,6 @@ class TodayViewController: UIViewController {
     }
 
     private func queryAPI() {
-        guard let userLocation = locationManager.location else {
-            return
-        }
-
         let activityIndicatorView = UIActivityIndicatorView(style: .gray)
         self.activityIndicatorView = activityIndicatorView
         activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
@@ -151,12 +147,12 @@ class TodayViewController: UIViewController {
 
         digitransitService.getBikeRentalStations { [weak self] response, error in
             DispatchQueue.main.async {
-                self?.didGetBikeRentalStations(response: response, error: error, userLocation: userLocation)
+                self?.didGetBikeRentalStations(response: response, error: error)
             }
         }
     }
 
-    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
+    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
 
@@ -166,6 +162,25 @@ class TodayViewController: UIViewController {
             let errorMessage = NSLocalizedString("today_extension_request_failed", comment: "")
             showResultsLabel(lines: [errorMessage])
 
+            return
+        }
+
+        // Wait until the last possible moment before accessing the user's
+        // location.
+        //
+        // In practice, it was observed that locationManager.location is only
+        // valid after the CLLocationManager delegate method below has
+        // been called, even if we already have permission.
+        //
+        // The delegate method is called asynchronously from viewDidLoad,
+        // and to avoid all race conditions we should be proceeding further
+        // only after the delegate method has been called.
+        //
+        // But there is a network call in between, that _should_ give us
+        // enough buffer for the delegate method to have been called by
+        // now. Famous last words, but it seems to work always in practice.
+
+        guard let userLocation = locationManager.location else {
             return
         }
 
@@ -264,12 +279,16 @@ class TodayViewController: UIViewController {
 
 extension TodayViewController: NCWidgetProviding {
     func widgetPerformUpdate(completionHandler: (@escaping (NCUpdateResult) -> Void)) {
+        // This is called by the OS "frequently enough". Effectively,
+        // everytime the user opens the Today Center afresh.
+
+        // Template Docs:
         // Perform any setup necessary in order to update the view.
-        
         // If an error is encountered, use NCUpdateResult.Failed
         // If there's no update required, use NCUpdateResult.NoData
         // If there's an update, use NCUpdateResult.NewData
-        
+
+        // Returning .newData here causes viewDidLoad to be called.
         completionHandler(NCUpdateResult.newData)
     }
 }
