@@ -31,6 +31,8 @@ class TodayViewController: UIViewController {
     private var locationAccessNeededLabel: UILabel?
     private var activityIndicatorView: UIActivityIndicatorView?
     private var resultsLabel: UILabel?
+    private var lastQueryAPIResult: (response: DigitransitService.BikeRentalStationsResponse?, error: Error?)?
+    private var lastUserLocation: CLLocation?
 
     private var digitransitService = DigitransitService()
     private var userLocationManager: UserLocationManager?
@@ -107,7 +109,13 @@ class TodayViewController: UIViewController {
         }
     }
 
-    private func queryAPI(userLocation: CLLocation) {
+    private func queryAPIIfNeeded() {
+        if lastQueryAPIResult == nil {
+            queryAPI()
+        }
+    }
+
+    private func queryAPI() {
         // In the first iteration, I tried using the digitransit nearest
         // API to find the bike stations nearest to the user coordinate.
         //
@@ -139,12 +147,26 @@ class TodayViewController: UIViewController {
 
         digitransitService.getBikeRentalStations { [weak self] response, error in
             DispatchQueue.main.async {
-                self?.didGetBikeRentalStations(response: response, error: error, userLocation: userLocation)
+                self?.didGetBikeRentalStations(response: response, error: error)
             }
         }
     }
 
-    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
+    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
+        lastQueryAPIResult = (response: response, error: error)
+        showResultsIfPossible()
+    }
+
+    private func showResultsIfPossible() {
+        // If both the API call and the user location access have completed,
+        // show results.
+
+        if let queryAPIResult = lastQueryAPIResult, let userLocation = lastUserLocation {
+            showResults(response: queryAPIResult.response, error: queryAPIResult.error, userLocation: userLocation)
+        }
+    }
+
+    private func showResults(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
 
@@ -271,12 +293,17 @@ extension TodayViewController: UserLocationManagerDelegate {
         if granted {
             locationAccessNeededLabel?.removeFromSuperview()
             locationAccessNeededLabel = nil
+
+            // Fire off an API query while we wait for the user's location.
+            queryAPIIfNeeded()
         } else {
             showLocationAccessNeededLabel()
         }
     }
 
     func userLocationManagerDidObtainUserLocation(_ userLocation: CLLocation) {
-        queryAPI(userLocation: userLocation)
+        lastUserLocation = userLocation
+
+        showResultsIfPossible()
     }
 }
