@@ -13,7 +13,6 @@ class MapViewController: UIViewController {
     private var mapView: MKMapView?
     private var toolbar: UIToolbar?
     private var locationManager: CLLocationManager?
-    private var didRequestLocation = false
     private var isAPIRequestInProgress = false
     private var lastSuccessfulAPIRequestCompletionDate: Date?
     private var lastPlacedAnnotations = [MKAnnotation]()
@@ -34,6 +33,7 @@ class MapViewController: UIViewController {
         mapView.translatesAutoresizingMaskIntoConstraints = false
         mapView.delegate = self
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: markerAnnotationViewReuseIdentifier)
+        mapView.showsUserLocation = true
         self.mapView = mapView
 
         view.addSubview(mapView)
@@ -44,23 +44,11 @@ class MapViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
             ])
 
-
         createDrawerView()
 
         let locationManager = CLLocationManager()
         self.locationManager = locationManager
         locationManager.delegate = self
-
-        mapView.showsUserLocation = true
-
-
-        let authorizationStatus = CLLocationManager.authorizationStatus()
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            locateMeWhenAuthorized()
-            drawerViewEnableLocationAccessButton?.isHidden = true
-        } else {
-            drawerViewEnableLocationAccessButton?.isHidden = false
-        }
 
         NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
 
@@ -91,11 +79,12 @@ class MapViewController: UIViewController {
             // The toolbar will now show a red tinted refresh button to
             // indicate an error.
             updateToolbar()
+
             return
         }
 
         lastSuccessfulAPIRequestCompletionDate = Date()
-        // The toolbar will now show a regular refresh button.
+        // The toolbar will now show a regular refresh button (after a minute).
         updateToolbar()
 
         let bikeRentalStations = response?.data?.bikeRentalStations
@@ -196,31 +185,33 @@ class MapViewController: UIViewController {
             // given annotations.
             //
             // By default, when we don't have access, then the map
-            // shows the entirety of Finland. So this effectively
-            // zooms into the Helsinki region.
+            // shows the entirety of Finland.
+            //
+            // The annotations in the response are littered around Helsinki
+            // and Espoo, so the below effectively zooms into the Helsinki
+            // region.
 
             mapView?.showAnnotations(annotations, animated: true)
         }
     }
 
-    @objc private func maybeLocateMe() {
+    @objc private func locateMe() {
         switch CLLocationManager.authorizationStatus() {
         case .authorizedAlways, .authorizedWhenInUse:
-            locateMeWhenAuthorized()
+            requestLocation()
 
         case .notDetermined:
-            didRequestLocation = true
             locationManager?.requestWhenInUseAuthorization()
 
         case .denied, .restricted:
-            locateMeWhenNotAuthorized()
+            showNoLocationAlert()
 
         @unknown default:
             break
         }
     }
 
-    private func locateMeWhenNotAuthorized() {
+    private func showNoLocationAlert() {
         // Show an alert to the user telling them that they need to
         // give access to the app in settings for us to be able to
         // locate them.
@@ -244,25 +235,8 @@ class MapViewController: UIViewController {
         present(alertController, animated: true)
     }
 
-    private func locateMeWhenAuthorized() {
-        // Redundant check, but do it anyways.
-        let authorizationStatus = CLLocationManager.authorizationStatus()
-        guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
-            return
-        }
-
-        guard CLLocationManager.locationServicesEnabled() else {
-            // I don't know (yet) when we will reach here
-            // (and that doesn't mean we won't; in any case,
-            // this is what the Apple sample code tells us to do).
-            return
-        }
-
-        guard let userLocationCoordinate = locationManager?.location?.coordinate else {
-            return
-        }
-
-        let viewRegion = MKCoordinateRegion(center: userLocationCoordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+    private func zoomToUserLocation(_ userLocation: CLLocation) {
+        let viewRegion = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView?.region = viewRegion
     }
 
@@ -330,7 +304,7 @@ class MapViewController: UIViewController {
             }
         }
 
-        let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(maybeLocateMe))
+        let locateMeBarButtonItem = UIBarButtonItem(image: makeLocationToolbarIconImage(), style: .plain, target: self, action: #selector(locateMe))
 
         var items = [UIBarButtonItem]()
         if let leftMostBarButtonItem = leftMostBarButtonItem {
@@ -414,7 +388,7 @@ class MapViewController: UIViewController {
         enableLocationAccessButton.translatesAutoresizingMaskIntoConstraints = false
         enableLocationAccessButton.setTitle(NSLocalizedString("info_enable_location_access", comment: ""), for: .normal)
         enableLocationAccessButton.titleLabel?.adjustsFontSizeToFitWidth = true
-        enableLocationAccessButton.addTarget(self, action: #selector(maybeLocateMe), for: .touchUpInside)
+        enableLocationAccessButton.addTarget(self, action: #selector(locateMe), for: .touchUpInside)
 
         let cityBikeWebsiteButton = UIButton(type: .system)
         cityBikeWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
@@ -463,6 +437,7 @@ class MapViewController: UIViewController {
         stackView.alignment = .center
 
         stackView.spacing = 4
+        stackView.setCustomSpacing(8, after: descriptionLabel)
         stackView.setCustomSpacing(32, after: appWebsiteButton)
         stackView.setCustomSpacing(8, after: widgetTipLabel)
         stackView.setCustomSpacing(32, after: widgetExampleImageView)
@@ -683,34 +658,57 @@ extension MapViewController: MKMapViewDelegate {
 
 extension MapViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        if !didRequestLocation {
-            // The docs state thet the authorization status might change
-            // without any action on our part (e.g. due to Airplane mode).
-            // https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services/requesting_when-in-use_authorization
-            //
-            // So only do something in this method if we know it was
-            // called because of us calling
-            // locationManager?.requestWhenInUseAuthorization() above.
-            return
-        }
+        // This method is called in multiple scenarios:
+        //
+        // - Sometime after initializing the location manager during
+        //   viewDidLoad. Note that this happens asynchronously, so
+        //   we cannot rely on the order of viewDidLoad/coming-here.
+        //
+        // - When the authorization status changes as a result of us
+        //   calling requestWhenInUseAuthorization.
+        //
+        // - The docs mention that it might be called in other scenarios
+        //   to, without any action on our part (e.g. due to Airplane mode).
 
-        didRequestLocation = false
 
-        switch CLLocationManager.authorizationStatus() {
-        case .authorizedAlways, .authorizedWhenInUse:
-            // If we are authorized, then what has happened is:
-            // - The user pressed the locate button
-            // - Said yes on the OS prompt
-            // - We come here
-            // So now do what they want.
-
+        let authorizationStatus = CLLocationManager.authorizationStatus()
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             drawerViewEnableLocationAccessButton?.isHidden = true
-            locateMeWhenAuthorized()
-
-        default:
+            requestLocation()
+        } else {
             drawerViewEnableLocationAccessButton?.isHidden = false
-            break
         }
     }
 
+    private func requestLocation() {
+        guard CLLocationManager.locationServicesEnabled() else {
+            // I don't know (yet) when we will reach here.
+            // Doing this because this is what the Apple sample code does.
+            return
+        }
+
+        // Request location once to ensure that
+        // locationManager?.location?.coordinate becomes non-nil.
+        //
+        // CLLocationManager calls the didUpdateLocations delegate
+        // method when it is done.
+        //
+        // Note that on the simulator, it sometimes takes a while
+        // (4-5 seconds) before the delegate method is called.
+
+        locationManager?.requestLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let mostRecentLocation = locations.last else {
+            NSLog("WARNING: Could not obtain user location")
+            return
+        }
+
+        zoomToUserLocation(mostRecentLocation)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        NSLog("locationManager:didFailWithError: \(error)")
+    }
 }
