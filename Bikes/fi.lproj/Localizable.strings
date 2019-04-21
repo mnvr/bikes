@@ -1,15 +1,17 @@
-"no_location_alert_title" = "Location Setting Disabled";
-"no_location_alert_message" = "Please allow location access to show the bikes near you.";
-"no_location_alert_open_settings" = "Open Settings";
-"cancel" = "Cancel";
-"today_extension_tap_to_allow_location_access" = "Tap to allow location access for showing bikes near you";
-"today_extension_request_failed" = "Could not fetch nearby bike information";
-"today_extension_no_nearby_bikes" = "No bikes are available nearby";
-"info_description" = "This app shows the number of city bikes currently available at bike stations in Helsinki and Espoo.";
-"info_enable_location_access" = "Enable Location Access";
-"info_helsinki_city_bike_website" = "City Bike Website";
+"no_location_alert_title" = "Sijainti asetus poistettu käytöstä";
+"no_location_alert_message" = "Sallikaa sijainnin käyttö näyttää kaupunkipyöriä lähellä sinua";
+"no_location_alert_open_settings" = "Avaa asetukset";
+"cancel" = "Kumoa";
+"today_extension_tap_to_allow_location_access" = "Napauta, jos haluat sallia sijainnin käytön (kaupunkipyörien näyttäminen lähelläsi)";
+"today_extension_request_failed" = "Lähistöllä olevia pyörä tietoja ei voitu noutaa";
+"today_extension_no_nearby_bikes" = "Lähistölla ei ole kaupunkipyöriä";
+"info_description" = "Tämä sovellus näyttää kaupunki pyörien määrän, joka on tällä hetkellä saatavilla Hesingin ja Espoon pyörän asemilla.";
+"info_enable_location_access" = "Ota käyttöön sijainnin käyttö";
+"info_helsinki_city_bike_website" = "Kaupunkipyörät Verkkosivut";
 /* Different URLs for FI, SV, EN */
-"info_helsinki_city_bike_website_url" = "https://kaupunkipyorat.hsl.fi/en";
-"info_app_website" = "App Website";
-"info_widget_tip" = "Tip: Add the app's widget to your Today view for quick access.";
-"info_footer" = "Made with ❤️ in Helsinki";
+"info_helsinki_city_bike_website_url" = "https://kaupunkipyorat.hsl.fi";
+"info_app_website" = "Sovelluksen Verkkosivut";
+"info_widget_tip" = "Vinkki: voit nopeasti nähdä lähellä olevat kaupunkipyörät lisäämallä sovelluksen widgetin.";
+/* Name of the image file in Assets.xcassets shown below the tip string */
+"info_widget_tip_image_name" = "WidgetExample-fi";
+"info_footer" = "Valmistettu ❤️-kanssa Helsingissä";

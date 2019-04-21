@@ -401,7 +401,8 @@ class MapViewController: UIViewController {
         widgetTipLabel.font = .preferredFont(forTextStyle: .callout)
         widgetTipLabel.text = NSLocalizedString("info_widget_tip", comment: "")
 
-        let widgetExampleImage = UIImage(imageLiteralResourceName: "WidgetExample")
+        let localizedImageResourceName = NSLocalizedString("info_widget_tip_image_name", comment: "")
+        let widgetExampleImage = UIImage(imageLiteralResourceName: localizedImageResourceName)
         let widgetExampleImageView = UIImageView(image: widgetExampleImage)
         widgetExampleImageView.translatesAutoresizingMaskIntoConstraints = false
         widgetExampleImageView.contentMode = .scaleAspectFit
@@ -649,8 +650,8 @@ extension MapViewController: MKMapViewDelegate {
         // http://maps.apple.com/maps?saddr=Current+Location&daddr=<Your Location>
         //
         // The docs (when I looked) did not mention it, but "Current Location"
-        // seems to be the countersign.
-        // TODO: Test this with Finnish locale.
+        // seems to be the countersign. It also seems to work even when the
+        // device is using Finnish (the maps app converts it to "Oma sijainti").
 
         let locationString = "\(coordinate.latitude),\(coordinate.longitude)"
         let urlString = "http://maps.apple.com/maps?saddr=Current+Location&daddr=\(locationString)"
