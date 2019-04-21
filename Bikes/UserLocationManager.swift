@@ -82,29 +82,24 @@ extension UserLocationManager: CLLocationManagerDelegate {
     }
 
     private func requestLocation() {
-        // If we have a recent cached location, use it.
-        let oneHour: TimeInterval = 60 * 60
-        if let cachedUserLocation = locationManager.location,
-            -cachedUserLocation.timestamp.timeIntervalSinceNow < oneHour {
-           delegate?.userLocationManagerDidObtainUserLocation(cachedUserLocation)
-        } else {
-            requestLocationDisregardingCache()
-        }
-    }
-
-    private func requestLocationDisregardingCache() {
         guard CLLocationManager.locationServicesEnabled() else {
             // I don't know (yet) when we will reach here.
             // Doing this because this is what the Apple sample code does.
+
             return
         }
 
-        // Tweaking this value, tradeoffs:
+        // Disregard any cached location present in locationManager.location,
+        // and ask for a new value that is good enough for navigation.
+        //
+        // Tweaking this has tradeoffs:
         //
         // - Without this specified, CoreLocation takes a few seconds to
         //   give us any results.
         //
-        // - However, the "nearest" bike stations might change
+        // - However, the "nearest" bike stations might change even the
+        //   user location is cached or off by a few hundred meters
+        //   (or less even, when downtown).
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
 
         // CLLocationManager calls the didUpdateLocations delegate
