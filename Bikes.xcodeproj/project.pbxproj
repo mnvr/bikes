@@ -57,6 +57,9 @@
 		6902CE9122633164003945E3 /* TodayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewController.swift; sourceTree = "<group>"; };
 		6902CE9622633164003945E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6902CEA22263673A003945E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		697E871A226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		697E871B226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		697E871C226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = fi; path = fi.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		69A59519226C5EDA00894315 /* MockResponses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockResponses.swift; sourceTree = "<group>"; };
 		69A5951C226C622600894315 /* MockLocation.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = MockLocation.gpx; sourceTree = "<group>"; };
 		69A5951E226C7BBD00894315 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
@@ -209,6 +212,7 @@
 			knownRegions = (
 				en,
 				Base,
+				fi,
 			);
 			mainGroup = 69BE2DE0225C776F00B2F425;
 			productRefGroup = 69BE2DEA225C776F00B2F425 /* Products */;
@@ -284,6 +288,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				6902CEA22263673A003945E3 /* en */,
+				697E871C226C941900E9F10A /* fi */,
 			);
 			name = Localizable.stringsdict;
 			sourceTree = "<group>";
@@ -292,6 +297,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				69B16D20226247320036137E /* en */,
+				697E871A226C941900E9F10A /* fi */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -300,6 +306,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				69B16D2522624E2E0036137E /* en */,
+				697E871B226C941900E9F10A /* fi */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -357,6 +364,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -418,6 +426,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
