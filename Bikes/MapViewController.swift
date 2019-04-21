@@ -670,7 +670,6 @@ extension MapViewController: CLLocationManagerDelegate {
         // - The docs mention that it might be called in other scenarios
         //   to, without any action on our part (e.g. due to Airplane mode).
 
-
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             drawerViewEnableLocationAccessButton?.isHidden = true

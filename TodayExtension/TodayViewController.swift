@@ -32,25 +32,35 @@ class TodayViewController: UIViewController {
     private var activityIndicatorView: UIActivityIndicatorView?
     private var resultsLabel: UILabel?
 
-    private lazy var digitransitService = DigitransitService()
-    private lazy var locationManager: CLLocationManager = {
-        let locationManager = CLLocationManager()
-        locationManager.delegate = self
-        return locationManager
-    }()
+    private var digitransitService = DigitransitService()
+    private var locationManager: CLLocationManager?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let authorizationStatus = CLLocationManager.authorizationStatus()
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            queryAPI()
-        } else {
-            showLocationAccessNeededLabel()
-        }
+        // When the location manager is ready it will call the
+        // didChangeAuthorization method, where we proceed with
+        // the rest of the initialization.
+        //
+        // Until then, show an activity indicator.
+
+        let activityIndicatorView = UIActivityIndicatorView(style: .gray)
+        self.activityIndicatorView = activityIndicatorView
+        activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+        activityIndicatorView.startAnimating()
+
+        view.addSubview(activityIndicatorView)
+        NSLayoutConstraint.activate([
+            activityIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            ])
 
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tap))
         view.addGestureRecognizer(tapGestureRecognizer)
+
+        let locationManager = CLLocationManager()
+        self.locationManager = locationManager
+        locationManager.delegate = self
     }
 
     @objc private func tap() {
@@ -66,6 +76,9 @@ class TodayViewController: UIViewController {
     }
 
     private func showLocationAccessNeededLabel() {
+        activityIndicatorView?.removeFromSuperview()
+        activityIndicatorView = nil
+
         let label = UILabel(frame: .zero)
         self.locationAccessNeededLabel = label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -89,12 +102,17 @@ class TodayViewController: UIViewController {
     private func promptForLocationAccess() {
         switch CLLocationManager.authorizationStatus() {
         case .authorizedAlways, .authorizedWhenInUse:
-            queryAPI()
+            // This shouldn't be happening because the location access
+            // needed label is expected to be displayed only when
+            // we do not have authorization.
+            //
+            // Try to do something reasonable anyway.
+            requestLocation()
 
         case .notDetermined:
             // If the user provides the permission, then Core Location will let
             // us know by calling the CLLocationManagerDelegate method below.
-            locationManager.requestWhenInUseAuthorization()
+            locationManager?.requestWhenInUseAuthorization()
 
         case .denied, .restricted:
             openSettings()
@@ -104,18 +122,7 @@ class TodayViewController: UIViewController {
         }
     }
 
-    private func queryAPI() {
-        let activityIndicatorView = UIActivityIndicatorView(style: .gray)
-        self.activityIndicatorView = activityIndicatorView
-        activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicatorView.startAnimating()
-
-        view.addSubview(activityIndicatorView)
-        NSLayoutConstraint.activate([
-            activityIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-            ])
-
+    private func queryAPI(userLocation: CLLocation) {
         // In the first iteration, I tried using the digitransit nearest
         // API to find the bike stations nearest to the user coordinate.
         //
@@ -147,12 +154,12 @@ class TodayViewController: UIViewController {
 
         digitransitService.getBikeRentalStations { [weak self] response, error in
             DispatchQueue.main.async {
-                self?.didGetBikeRentalStations(response: response, error: error)
+                self?.didGetBikeRentalStations(response: response, error: error, userLocation: userLocation)
             }
         }
     }
 
-    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?) {
+    private func didGetBikeRentalStations(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
 
@@ -162,25 +169,6 @@ class TodayViewController: UIViewController {
             let errorMessage = NSLocalizedString("today_extension_request_failed", comment: "")
             showResultsLabel(lines: [errorMessage])
 
-            return
-        }
-
-        // Wait until the last possible moment before accessing the user's
-        // location.
-        //
-        // In practice, it was observed that locationManager.location is only
-        // valid after the CLLocationManager delegate method below has
-        // been called, even if we already have permission.
-        //
-        // The delegate method is called asynchronously from viewDidLoad,
-        // and to avoid all race conditions we should be proceeding further
-        // only after the delegate method has been called.
-        //
-        // But there is a network call in between, that _should_ give us
-        // enough buffer for the delegate method to have been called by
-        // now. Famous last words, but it seems to work always in practice.
-
-        guard let userLocation = locationManager.location else {
             return
         }
 
@@ -295,36 +283,41 @@ extension TodayViewController: NCWidgetProviding {
 
 extension TodayViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        if locationAccessNeededLabel == nil {
-            // The docs state thet the authorization status might change
-            // without any action on our part (e.g. due to Airplane mode).
-            // https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services/requesting_when-in-use_authorization
-            //
-            // So only do something in this method if we know it was
-            // called because of us calling
-            // locationManager?.requestWhenInUseAuthorization() above.
-
-            // I also observed that Core Location automatically calls
-            // this method for us after viewDidLoad when location
-            // has been granted. Since we're already doing queryAPI
-            // from viewDidLoad if we had access, without this check
-            // there would be duplicate requests.
-
-            return
-        }
+        // See the comments in the same method implemented by MapViewController
+        // for scenarios when this method is called.
 
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            // If we are authorized, then what has happened is:
-            // - The user pressed the locate button
-            // - Said yes on the OS prompt
-            // - We come here
-            // So now do what they want.
-
             locationAccessNeededLabel?.removeFromSuperview()
             locationAccessNeededLabel = nil
 
-            queryAPI()
+            requestLocation()
+        } else {
+            showLocationAccessNeededLabel()
         }
+    }
+
+    private func requestLocation() {
+        guard CLLocationManager.locationServicesEnabled() else {
+            return
+        }
+
+        // CLLocationManager calls the didUpdateLocations delegate
+        // method when it is done.
+
+        locationManager?.requestLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let mostRecentLocation = locations.last else {
+            NSLog("WARNING: Could not obtain user location")
+            return
+        }
+
+        queryAPI(userLocation: mostRecentLocation)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        NSLog("locationManager:didFailWithError: \(error)")
     }
 }
