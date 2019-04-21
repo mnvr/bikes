@@ -89,25 +89,22 @@ extension UserLocationManager: CLLocationManagerDelegate {
             return
         }
 
-        // Disregard any cached location present in locationManager.location,
-        // and ask for a new value that is good enough for navigation.
-        //
-        // Tweaking this has tradeoffs:
-        //
-        // - Without this specified, CoreLocation takes a few seconds to
-        //   give us any results.
-        //
-        // - However, the "nearest" bike stations might change even the
-        //   user location is cached or off by a few hundred meters
-        //   (or less even, when downtown).
-        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
+        // Disregard any cached location present in locationManager.location
+        // and query afresh.
+
+        // locationManager.requestLocation() does exactly what we
+        // want, but in practice it is much slower that
+        // startUpdatingLocation, and then calling stopUpdatingLocation
+        // once we get a result.
 
         // CLLocationManager calls the didUpdateLocations delegate
         // method when it is done.
-        locationManager.requestLocation()
+        locationManager.startUpdatingLocation()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        locationManager.stopUpdatingLocation()
+
         guard let mostRecentLocation = locations.last else {
             NSLog("WARNING: Could not obtain user location")
             return
