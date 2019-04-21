@@ -33,7 +33,7 @@ class TodayViewController: UIViewController {
     private var resultsLabel: UILabel?
 
     private var digitransitService = DigitransitService()
-    private var locationManager: CLLocationManager?
+    private var userLocationManager: UserLocationManager?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,9 +58,7 @@ class TodayViewController: UIViewController {
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tap))
         view.addGestureRecognizer(tapGestureRecognizer)
 
-        let locationManager = CLLocationManager()
-        self.locationManager = locationManager
-        locationManager.delegate = self
+        userLocationManager = UserLocationManager(delegate: self)
     }
 
     @objc private func tap() {
@@ -100,25 +98,12 @@ class TodayViewController: UIViewController {
     }
 
     private func promptForLocationAccess() {
-        switch CLLocationManager.authorizationStatus() {
-        case .authorizedAlways, .authorizedWhenInUse:
-            // This shouldn't be happening because the location access
-            // needed label is expected to be displayed only when
-            // we do not have authorization.
-            //
-            // Try to do something reasonable anyway.
-            requestLocation()
+        guard let userLocationManager = userLocationManager else {
+            return
+        }
 
-        case .notDetermined:
-            // If the user provides the permission, then Core Location will let
-            // us know by calling the CLLocationManagerDelegate method below.
-            locationManager?.requestWhenInUseAuthorization()
-
-        case .denied, .restricted:
+        if !userLocationManager.locateUserIfNotDenied() {
             openSettings()
-
-        @unknown default:
-            break
         }
     }
 
@@ -281,47 +266,17 @@ extension TodayViewController: NCWidgetProviding {
     }
 }
 
-extension TodayViewController: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        // See the comments in the same method implemented by MapViewController
-        // for scenarios when this method is called.
-
-        let authorizationStatus = CLLocationManager.authorizationStatus()
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+extension TodayViewController: UserLocationManagerDelegate {
+    func userLocationManagerDidChangeAuthorization(_ granted: Bool) {
+        if granted {
             locationAccessNeededLabel?.removeFromSuperview()
             locationAccessNeededLabel = nil
-
-            requestLocation()
         } else {
             showLocationAccessNeededLabel()
         }
     }
 
-    private func requestLocation() {
-        guard CLLocationManager.locationServicesEnabled() else {
-            return
-        }
-
-        // CLLocationManager calls the didUpdateLocations delegate
-        // method when it is done.
-
-        // Reduce the desired accuracy to what we need, otherwise
-        // CoreLocation takes a few seconds to give us any results.
-        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
-
-        locationManager?.requestLocation()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let mostRecentLocation = locations.last else {
-            NSLog("WARNING: Could not obtain user location")
-            return
-        }
-
-        queryAPI(userLocation: mostRecentLocation)
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        NSLog("locationManager:didFailWithError: \(error)")
+    func userLocationManagerDidObtainUserLocation(_ userLocation: CLLocation) {
+        queryAPI(userLocation: userLocation)
     }
 }

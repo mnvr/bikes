@@ -12,7 +12,7 @@ class MapViewController: UIViewController {
 
     private var mapView: MKMapView?
     private var toolbar: UIToolbar?
-    private var locationManager: CLLocationManager?
+    private var userLocationManager: UserLocationManager?
     private var isAPIRequestInProgress = false
     private var lastSuccessfulAPIRequestCompletionDate: Date?
     private var lastPlacedAnnotations = [MKAnnotation]()
@@ -46,9 +46,7 @@ class MapViewController: UIViewController {
 
         createDrawerView()
 
-        let locationManager = CLLocationManager()
-        self.locationManager = locationManager
-        locationManager.delegate = self
+        userLocationManager = UserLocationManager(delegate: self)
 
         NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
 
@@ -196,18 +194,12 @@ class MapViewController: UIViewController {
     }
 
     @objc private func locateMe() {
-        switch CLLocationManager.authorizationStatus() {
-        case .authorizedAlways, .authorizedWhenInUse:
-            requestLocation()
+        guard let userLocationManager = userLocationManager else {
+            return
+        }
 
-        case .notDetermined:
-            locationManager?.requestWhenInUseAuthorization()
-
-        case .denied, .restricted:
+        if !userLocationManager.locateUserIfNotDenied() {
             showNoLocationAlert()
-
-        @unknown default:
-            break
         }
     }
 
@@ -597,6 +589,20 @@ class MapViewController: UIViewController {
     }
 }
 
+extension MapViewController: UserLocationManagerDelegate {
+    func userLocationManagerDidChangeAuthorization(_ granted: Bool) {
+        if granted {
+            drawerViewEnableLocationAccessButton?.isHidden = true
+        } else {
+            drawerViewEnableLocationAccessButton?.isHidden = false
+        }
+    }
+
+    func userLocationManagerDidObtainUserLocation(_ userLocation: CLLocation) {
+        zoomToUserLocation(userLocation)
+    }
+}
+
 extension MapViewController: MKMapViewDelegate {
     private class BikeStationAnnotation: MKPointAnnotation {
         var markerTintColor: UIColor?
@@ -653,63 +659,5 @@ extension MapViewController: MKMapViewDelegate {
         }
 
         UIApplication.shared.open(url)
-    }
-}
-
-extension MapViewController: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        // This method is called in multiple scenarios:
-        //
-        // - Sometime after initializing the location manager during
-        //   viewDidLoad. Note that this happens asynchronously, so
-        //   we cannot rely on the order of viewDidLoad/coming-here.
-        //
-        // - When the authorization status changes as a result of us
-        //   calling requestWhenInUseAuthorization.
-        //
-        // - The docs mention that it might be called in other scenarios
-        //   to, without any action on our part (e.g. due to Airplane mode).
-
-        let authorizationStatus = CLLocationManager.authorizationStatus()
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            drawerViewEnableLocationAccessButton?.isHidden = true
-            requestLocation()
-        } else {
-            drawerViewEnableLocationAccessButton?.isHidden = false
-        }
-    }
-
-    private func requestLocation() {
-        guard CLLocationManager.locationServicesEnabled() else {
-            // I don't know (yet) when we will reach here.
-            // Doing this because this is what the Apple sample code does.
-            return
-        }
-
-        // If we have a cached location, use it.
-        if let cachedUserLocation = locationManager?.location {
-            zoomToUserLocation(cachedUserLocation)
-        } else {
-            // Reduce the desired accuracy to what we need, otherwise
-            // CoreLocation takes a few seconds to give us any results.
-            locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
-
-            // CLLocationManager calls the didUpdateLocations delegate
-            // method when it is done.
-            locationManager?.requestLocation()
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let mostRecentLocation = locations.last else {
-            NSLog("WARNING: Could not obtain user location")
-            return
-        }
-
-        zoomToUserLocation(mostRecentLocation)
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        NSLog("locationManager:didFailWithError: \(error)")
     }
 }
