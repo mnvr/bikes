@@ -686,16 +686,18 @@ extension MapViewController: CLLocationManagerDelegate {
             return
         }
 
-        // Request location once to ensure that
-        // locationManager?.location?.coordinate becomes non-nil.
-        //
-        // CLLocationManager calls the didUpdateLocations delegate
-        // method when it is done.
-        //
-        // Note that on the simulator, it sometimes takes a while
-        // (4-5 seconds) before the delegate method is called.
+        // If we have a cached location, use it.
+        if let cachedUserLocation = locationManager?.location {
+            zoomToUserLocation(cachedUserLocation)
+        } else {
+            // Reduce the desired accuracy to what we need, otherwise
+            // CoreLocation takes a few seconds to give us any results.
+            locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
 
-        locationManager?.requestLocation()
+            // CLLocationManager calls the didUpdateLocations delegate
+            // method when it is done.
+            locationManager?.requestLocation()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

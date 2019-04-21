@@ -305,6 +305,10 @@ extension TodayViewController: CLLocationManagerDelegate {
         // CLLocationManager calls the didUpdateLocations delegate
         // method when it is done.
 
+        // Reduce the desired accuracy to what we need, otherwise
+        // CoreLocation takes a few seconds to give us any results.
+        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
+
         locationManager?.requestLocation()
     }
 
