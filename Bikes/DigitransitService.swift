@@ -52,6 +52,8 @@ class DigitransitService {
          https://api.digitransit.fi/graphiql/hsl?query=%7B%0A%20%20bikeRentalStations%20%7B%0A%20%20%20%20name%0A%20%20%20%20bikesAvailable%0A%20%20%20%20realtime%0A%20%20%20%20lat%0A%20%20%20%20lon%0A%20%20%7D%0A%7D
          */
 
+        // For an example response, see MockResponses.swift
+
         let graphQLString = #"""
 {
   bikeRentalStations {
@@ -63,6 +65,24 @@ class DigitransitService {
   }
 }
 """#
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["BIKES_MOCK_HTTP"]?.isEmpty == false {
+            if let mockData = MockResponses().bikeRentalStations.data(using: .utf8) {
+                NSLog("Using MockResponse for bikeRentalStations query")
+
+                // Insert a random delay between 0 and 5 seconds.
+                let delay = Double.random(in: 0..<5)
+
+                DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                    self?.didGetBikeStations(data: mockData, error: nil, completion: completion)
+
+                }
+
+                return
+            }
+        }
+        #endif
+
         getRoutingGraphQL(graphQLString) { [weak self] (data, error) in
             self?.didGetBikeStations(data: data, error: error, completion: completion)
         }

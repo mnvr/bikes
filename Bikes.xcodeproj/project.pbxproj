@@ -14,6 +14,8 @@
 		6902CEA12263673A003945E3 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 6902CEA32263673A003945E3 /* Localizable.stringsdict */; };
 		6902CEA4226367FD003945E3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		6902CEA522636801003945E3 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 6902CEA32263673A003945E3 /* Localizable.stringsdict */; };
+		69A5951A226C5EDA00894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
+		69A5951D226C645000894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
 		69B16D1F226247320036137E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D21226247320036137E /* InfoPlist.strings */; };
 		69B16D2422624E2E0036137E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BE2DEC225C776F00B2F425 /* AppDelegate.swift */; };
@@ -53,6 +55,8 @@
 		6902CE9122633164003945E3 /* TodayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewController.swift; sourceTree = "<group>"; };
 		6902CE9622633164003945E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6902CEA22263673A003945E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		69A59519226C5EDA00894315 /* MockResponses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockResponses.swift; sourceTree = "<group>"; };
+		69A5951C226C622600894315 /* MockLocation.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = MockLocation.gpx; sourceTree = "<group>"; };
 		69B16D20226247320036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		69B16D2522624E2E0036137E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		69BE2DE9225C776F00B2F425 /* Bikes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bikes.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,6 +129,8 @@
 				69BE2DEC225C776F00B2F425 /* AppDelegate.swift */,
 				69BE2E00225CABE200B2F425 /* MapViewController.swift */,
 				69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */,
+				69A59519226C5EDA00894315 /* MockResponses.swift */,
+				69A5951C226C622600894315 /* MockLocation.gpx */,
 				69BE2DF3225C776F00B2F425 /* Assets.xcassets */,
 				69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */,
 				69BE2DF8225C776F00B2F425 /* Info.plist */,
@@ -242,6 +248,7 @@
 			files = (
 				6902CE9E22633A86003945E3 /* DigitransitService.swift in Sources */,
 				6902CE9222633164003945E3 /* TodayViewController.swift in Sources */,
+				69A5951D226C645000894315 /* MockResponses.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +258,7 @@
 			files = (
 				69BE2DFF225C78FE00B2F425 /* DigitransitService.swift in Sources */,
 				69BE2E01225CABE200B2F425 /* MapViewController.swift in Sources */,
+				69A5951A226C5EDA00894315 /* MockResponses.swift in Sources */,
 				69BE2DED225C776F00B2F425 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
