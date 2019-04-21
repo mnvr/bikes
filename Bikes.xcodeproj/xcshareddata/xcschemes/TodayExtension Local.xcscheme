@@ -60,7 +60,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = ""
       selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
-      language = "fi"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -68,16 +67,26 @@
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
       launchAutomaticallySubstyle = "2">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.springboard">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "69BE2DE8225C776F00B2F425"
-            BuildableName = "Bikes.app"
-            BlueprintName = "Bikes"
+            BlueprintIdentifier = "6902CE8B22633164003945E3"
+            BuildableName = "TodayExtension.appex"
+            BlueprintName = "TodayExtension"
             ReferencedContainer = "container:Bikes.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </RemoteRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "6902CE8B22633164003945E3"
+            BuildableName = "TodayExtension.appex"
+            BlueprintName = "TodayExtension"
+            ReferencedContainer = "container:Bikes.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "BIKES_MOCK_HTTP"
@@ -87,10 +96,6 @@
       </EnvironmentVariables>
       <AdditionalOptions>
       </AdditionalOptions>
-      <LocationScenarioReference
-         identifier = "../../Bikes/MockLocation.gpx"
-         referenceType = "0">
-      </LocationScenarioReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
