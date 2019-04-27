@@ -25,13 +25,15 @@ class MapViewController: UIViewController {
     private var drawerViewTopAnchorConstraint: NSLayoutConstraint?
     private var drawerViewPanStartingHeight: CGFloat = 0
 
+    let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
         let mapView = MKMapView(frame: .zero)
         mapView.translatesAutoresizingMaskIntoConstraints = false
         mapView.delegate = self
-        mapView.register(BikeStationAnnotationView.self, forAnnotationViewWithReuseIdentifier: BikeStationAnnotationView.reuseIdentifier)
+        mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: markerAnnotationViewReuseIdentifier)
         mapView.showsUserLocation = true
         self.mapView = mapView
 
@@ -607,29 +609,6 @@ class BikeStationAnnotation: MKPointAnnotation {
     var markerTintColor: UIColor?
 }
 
-/// Create a subclass so that we can lazily create the callouts
-/// on user interaction instead of always creating them.
-
-class BikeStationAnnotationView: MKMarkerAnnotationView {
-    static let reuseIdentifier = String(describing: BikeStationAnnotationView.self)
-
-    weak var bikeStationAnnotation: BikeStationAnnotation?
-    weak var delegate: BikeStationAnnotationViewDelegate?
-
-    override var detailCalloutAccessoryView: UIView? {
-        get {
-            return delegate?.bikeStationAnnotationViewDetailCalloutAccessoryView(self)
-        }
-        set {
-
-        }
-    }
-}
-
-protocol BikeStationAnnotationViewDelegate: class {
-    func bikeStationAnnotationViewDetailCalloutAccessoryView(_ view: BikeStationAnnotationView) -> UIView?
-}
-
 // Custom button class so that we can keep a reference to the
 // annotation that is linked to the button.
 
@@ -651,29 +630,21 @@ extension MapViewController: MKMapViewDelegate {
             return nil
         }
 
-        let view = mapView.dequeueReusableAnnotationView(withIdentifier: BikeStationAnnotationView.reuseIdentifier, for: annotation)
-        guard let markerAnnotationView = view as? BikeStationAnnotationView else {
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
+        guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
             return view
         }
-
-        markerAnnotationView.bikeStationAnnotation = bikeStationAnnotation
-        markerAnnotationView.delegate = self
 
         markerAnnotationView.glyphText = annotation.title ?? "?"
         markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
 
         markerAnnotationView.canShowCallout = true
+        markerAnnotationView.detailCalloutAccessoryView = makeDetailCalloutAccessoryView(bikeStationAnnotation: bikeStationAnnotation)
 
         return markerAnnotationView
     }
-}
 
-extension MapViewController: BikeStationAnnotationViewDelegate {
-    func bikeStationAnnotationViewDetailCalloutAccessoryView(_ view: BikeStationAnnotationView) -> UIView? {
-        guard let bikeStationAnnotation = view.bikeStationAnnotation else {
-            return nil
-        }
-
+    func makeDetailCalloutAccessoryView(bikeStationAnnotation: BikeStationAnnotation) -> UIView {
         let favouriteButton = BikeStationAnnotationButton(type: .system)
         favouriteButton.translatesAutoresizingMaskIntoConstraints = false
         favouriteButton.bikeStationAnnotation = bikeStationAnnotation
