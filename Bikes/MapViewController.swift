@@ -607,6 +607,7 @@ extension MapViewController: UserLocationManagerDelegate {
 
 class BikeStationAnnotation: MKPointAnnotation {
     var markerTintColor: UIColor?
+    var bikeRentalStation: DigitransitService.BikeRentalStation?
 }
 
 // Custom button class so that we can keep a reference to the
