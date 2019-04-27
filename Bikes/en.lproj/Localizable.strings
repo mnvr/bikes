@@ -15,3 +15,6 @@
 /* Name of the image file in Assets.xcassets shown below the tip string */
 "info_widget_tip_image_name" = "WidgetExample-en";
 "info_footer" = "Made with ❤️ in Helsinki";
+"pin_to_widget" = "Pin to Widget";
+"hide_from_widget" = "Hide from Widget";
+"directions" = "Directions";

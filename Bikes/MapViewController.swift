@@ -24,6 +24,7 @@ class MapViewController: UIViewController {
     private var drawerViewEnableLocationAccessButton: UIButton?
     private var drawerViewTopAnchorConstraint: NSLayoutConstraint?
     private var drawerViewPanStartingHeight: CGFloat = 0
+    private var cachedDetailCalloutAccessoryViewStackViewMinimumWidth: CGFloat?
 
     let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
 
@@ -50,9 +51,11 @@ class MapViewController: UIViewController {
         userLocationManager = UserLocationManager(delegate: self)
 
         NotificationCenter.default.addObserver(self, selector: #selector(refreshIfNeeded), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(contentSizeCategoryDidChange), name: UIContentSizeCategory.didChangeNotification, object: nil)
 
         refresh()
     }
+
 
     @objc private func refresh() {
         isAPIRequestInProgress = true
@@ -152,6 +155,7 @@ class MapViewController: UIViewController {
             let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
 
             let annotation = BikeStationAnnotation()
+            annotation.bikeRentalStation = bikeRentalStation
             annotation.coordinate = coordinate
             annotation.title = title
             annotation.subtitle = subtitle
@@ -646,45 +650,142 @@ extension MapViewController: MKMapViewDelegate {
     }
 
     func makeDetailCalloutAccessoryView(bikeStationAnnotation: BikeStationAnnotation) -> UIView {
-        let favouriteButton = BikeStationAnnotationButton(type: .system)
-        favouriteButton.translatesAutoresizingMaskIntoConstraints = false
-        favouriteButton.bikeStationAnnotation = bikeStationAnnotation
-        favouriteButton.setTitle("Pin to widget", for: .normal)
-        favouriteButton.contentHorizontalAlignment = .left
-        // This is needed, otherwise the stack view collapses to
-        // the size of the smallest element in it.
-        favouriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        favouriteButton.addTarget(self, action: #selector(toggleFavourite), for: .touchUpInside)
+        let stackView = UIStackView(arrangedSubviews: [])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
 
-        let blockButton = BikeStationAnnotationButton(type: .system)
-        blockButton.translatesAutoresizingMaskIntoConstraints = false
-        blockButton.bikeStationAnnotation = bikeStationAnnotation
-        blockButton.setTitle("Hide from widget", for: .normal)
-        blockButton.contentHorizontalAlignment = .left
-        blockButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        blockButton.addTarget(self, action: #selector(toggleBlock), for: .touchUpInside)
+        var savedFavouriteButton: UIButton?
+        var savedBlockButton: UIButton?
+
+        if let stationID = bikeStationAnnotation.bikeRentalStation?.stationId {
+            let favouriteButtonTitle = NSLocalizedString("pin_to_widget", comment: "")
+            let blockButtonTitle = NSLocalizedString("hide_from_widget", comment: "")
+
+            let favouriteButtonSelectedTitle = favouriteButtonTitle + " ✓"
+            let blockButtonSelectedTitle = blockButtonTitle + " ✓"
+
+            let favouriteButton = BikeStationAnnotationButton(type: .system)
+            favouriteButton.translatesAutoresizingMaskIntoConstraints = false
+            favouriteButton.bikeStationAnnotation = bikeStationAnnotation
+            favouriteButton.setTitle(favouriteButtonTitle, for: .normal)
+            favouriteButton.setTitle(favouriteButtonSelectedTitle, for: .selected)
+            favouriteButton.setTitle(favouriteButtonSelectedTitle, for: [.selected, .highlighted])
+            favouriteButton.contentHorizontalAlignment = .left
+            // This is needed, otherwise the stack view collapses to
+            // the size of the smallest element in it.
+            favouriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+            favouriteButton.addTarget(self, action: #selector(toggleFavourite), for: .touchUpInside)
+
+            if stationDataStore?.isFavorite(stationID: stationID) == true {
+                favouriteButton.isSelected = true
+            }
+
+            let blockButton = BikeStationAnnotationButton(type: .system)
+            blockButton.translatesAutoresizingMaskIntoConstraints = false
+            blockButton.bikeStationAnnotation = bikeStationAnnotation
+            blockButton.setTitle(blockButtonTitle, for: .normal)
+            blockButton.setTitle(blockButtonSelectedTitle, for: .selected)
+            blockButton.setTitle(blockButtonSelectedTitle, for: [.selected, .highlighted])
+            blockButton.contentHorizontalAlignment = .left
+            blockButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+            blockButton.addTarget(self, action: #selector(toggleBlock), for: .touchUpInside)
+
+            if stationDataStore?.isBlocked(stationID: stationID) == true {
+                blockButton.isSelected = true
+            }
+
+            stackView.addArrangedSubview(favouriteButton)
+            stackView.addArrangedSubview(blockButton)
+
+            savedFavouriteButton = favouriteButton
+            savedBlockButton = blockButton
+        }
+
+        let directionsButtonTitle = NSLocalizedString("directions", comment: "")
 
         let directionsButton = BikeStationAnnotationButton(type: .system)
         directionsButton.translatesAutoresizingMaskIntoConstraints = false
         directionsButton.bikeStationAnnotation = bikeStationAnnotation
-        directionsButton.setTitle("Directions", for: .normal)
+        directionsButton.setTitle(directionsButtonTitle, for: .normal)
         directionsButton.contentHorizontalAlignment = .left
         directionsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         directionsButton.addTarget(self, action: #selector(directions), for: .touchUpInside)
 
-        let stackView = UIStackView(arrangedSubviews: [directionsButton])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
+        stackView.addArrangedSubview(directionsButton)
 
-        return stackView
+        // When the button is in the selected state, it expands a bit
+        // which causes the call out to resize.
+        //
+        // To prevent that from happening, we pre-compute the size of the
+        // stack view when the buttons would be selected, and set that
+        // as the minimum size of the stack view.
+        //
+        // Since the button content is the same for all annotations,
+        // cache this value.
+
+        let minimumWidth: CGFloat
+        if let cachedMinimumWidth = cachedDetailCalloutAccessoryViewStackViewMinimumWidth {
+            minimumWidth = cachedMinimumWidth
+        } else {
+            let favoriteButtonSelectionState = savedFavouriteButton?.isSelected
+            let blockButtonSelectedState = savedBlockButton?.isSelected
+
+            // Make the buttons selected because in the selected configuration
+            // they have more width than normal.
+            savedFavouriteButton?.isSelected = true
+            savedBlockButton?.isSelected = true
+
+            minimumWidth = stackView.systemLayoutSizeFitting(UIView.layoutFittingExpandedSize).width
+
+            savedFavouriteButton?.isSelected = favoriteButtonSelectionState ?? false
+            savedBlockButton?.isSelected = blockButtonSelectedState ?? false
+
+            cachedDetailCalloutAccessoryViewStackViewMinimumWidth = minimumWidth
+        }
+
+        // The buttons expand on both sides, but the stack view content
+        // is left aligned, so embed the stack view in a container and
+        // set the container's width instead.
+
+        let stackViewContainer = UIView(frame: .zero)
+        stackViewContainer.translatesAutoresizingMaskIntoConstraints = false
+        stackViewContainer.addSubview(stackView)
+        NSLayoutConstraint.activate([
+            stackView.leadingAnchor.constraint(greaterThanOrEqualToSystemSpacingAfter: stackViewContainer.leadingAnchor, multiplier: 1),
+            stackViewContainer.trailingAnchor.constraint(greaterThanOrEqualToSystemSpacingAfter: stackView.trailingAnchor, multiplier: 1),
+            stackView.widthAnchor.constraint(greaterThanOrEqualToConstant: minimumWidth),
+
+            stackView.topAnchor.constraint(equalToSystemSpacingBelow: stackViewContainer.topAnchor, multiplier: 1),
+            stackViewContainer.bottomAnchor.constraint(equalToSystemSpacingBelow: stackView.bottomAnchor, multiplier: 1)
+            ])
+
+        return stackViewContainer
+    }
+
+    @objc private func contentSizeCategoryDidChange() {
+        cachedDetailCalloutAccessoryViewStackViewMinimumWidth = nil
     }
 
     @objc private func toggleFavourite(_ sender: UIButton?) {
-        guard let bikeStationAnnotion = (sender as? BikeStationAnnotationButton)?.bikeStationAnnotation else {
+        guard let bikeStationAnnotationButton = (sender as? BikeStationAnnotationButton) else {
             return
         }
 
-     //   delegate?.bikeStationAnnotationViewToggleFavourite(self)
+        guard let bikeStationAnnotation = bikeStationAnnotationButton.bikeStationAnnotation else {
+            return
+        }
+
+        guard let stationID = bikeStationAnnotation.bikeRentalStation?.stationId else {
+            return
+        }
+
+        if bikeStationAnnotationButton.isSelected {
+            stationDataStore?.setFavorite(false, stationID: stationID)
+            bikeStationAnnotationButton.isSelected = false
+        } else {
+            stationDataStore?.setFavorite(true, stationID: stationID)
+            bikeStationAnnotationButton.isSelected = true
+        }
     }
 
     @objc private func toggleBlock(_ sender: UIButton?) {
@@ -692,7 +793,25 @@ extension MapViewController: MKMapViewDelegate {
             return
         }
 
-      //  delegate?.bikeStationAnnotationViewToggleBlock(self)
+        guard let bikeStationAnnotationButton = (sender as? BikeStationAnnotationButton) else {
+            return
+        }
+
+        guard let bikeStationAnnotation = bikeStationAnnotationButton.bikeStationAnnotation else {
+            return
+        }
+
+        guard let stationID = bikeStationAnnotation.bikeRentalStation?.stationId else {
+            return
+        }
+
+        if bikeStationAnnotationButton.isSelected {
+            stationDataStore?.setBlocked(false, stationID: stationID)
+            bikeStationAnnotationButton.isSelected = false
+        } else {
+            stationDataStore?.setBlocked(true, stationID: stationID)
+            bikeStationAnnotationButton.isSelected = true
+        }
     }
 
     @objc private func directions(_ sender: UIButton?) {
