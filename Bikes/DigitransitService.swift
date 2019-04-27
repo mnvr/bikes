@@ -23,10 +23,13 @@ class DigitransitService {
     }
 
     struct BikeRentalStation: Decodable {
+        var stationId: String?
         /// Name of the bike rental station
         var name: String?
         /// Number of bikes currently available on the rental station.
         var bikesAvailable: Int?
+        /// Number of free spaces currently available on the rental station.
+        var spacesAvailable: Int?
         /// If true, values of bikesAvailable and spacesAvailable are
         /// updated from a real-time source. If false, values of bikesAvailable
         /// and spacesAvailable are always the total capacity divided by two.
@@ -57,8 +60,10 @@ class DigitransitService {
         let graphQLString = #"""
 {
   bikeRentalStations {
+    stationId
     name
     bikesAvailable
+    spacesAvailable
     realtime
     lat
     lon

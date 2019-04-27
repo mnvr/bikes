@@ -9,6 +9,7 @@ import MapKit
 
 class MapViewController: UIViewController {
     var digitransitService: DigitransitService?
+    var stationDataStore: StationDataStore?
 
     private var mapView: MKMapView?
     private var toolbar: UIToolbar?
@@ -608,6 +609,7 @@ class BikeStationAnnotation: MKPointAnnotation {
 
 /// Create a subclass so that we can lazily create the callouts
 /// on user interaction instead of always creating them.
+
 class BikeStationAnnotationView: MKMarkerAnnotationView {
     static let reuseIdentifier = String(describing: BikeStationAnnotationView.self)
 
@@ -616,62 +618,23 @@ class BikeStationAnnotationView: MKMarkerAnnotationView {
 
     override var detailCalloutAccessoryView: UIView? {
         get {
-            return actionsView
+            return delegate?.bikeStationAnnotationViewDetailCalloutAccessoryView(self)
         }
         set {
 
         }
     }
-
-    private lazy var actionsView: UIView? = {
-        let favouriteButton = UIButton(type: .system)
-        favouriteButton.translatesAutoresizingMaskIntoConstraints = false
-        favouriteButton.setTitle("Pin to widget", for: .normal)
-        favouriteButton.contentHorizontalAlignment = .left
-        // This is needed, otherwise the stack view collapses to
-        // the size of the smallest element in it.
-        favouriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        favouriteButton.addTarget(self, action: #selector(toggleFavourite), for: .touchUpInside)
-
-        let blockButton = UIButton(type: .system)
-        blockButton.translatesAutoresizingMaskIntoConstraints = false
-        blockButton.setTitle("Hide from widget", for: .normal)
-        blockButton.contentHorizontalAlignment = .left
-        blockButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        blockButton.addTarget(self, action: #selector(toggleBlock), for: .touchUpInside)
-
-        let directionsButton = UIButton(type: .system)
-        directionsButton.translatesAutoresizingMaskIntoConstraints = false
-        directionsButton.setTitle("Directions", for: .normal)
-        directionsButton.contentHorizontalAlignment = .left
-        directionsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-        directionsButton.addTarget(self, action: #selector(directions), for: .touchUpInside)
-
-//        let stackView = UIStackView(arrangedSubviews: [favouriteButton, blockButton, directionsButton])
-        let stackView = UIStackView(arrangedSubviews: [directionsButton])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-
-        return stackView
-    }()
-
-    @objc private func toggleFavourite(_ sender: UIButton?) {
-        delegate?.bikeStationAnnotationViewToggleFavourite(self)
-    }
-
-    @objc private func toggleBlock(_ sender: UIButton?) {
-        delegate?.bikeStationAnnotationViewToggleBlock(self)
-    }
-
-    @objc private func directions(_ sender: UIButton?) {
-        delegate?.bikeStationAnnotationViewDirections(self)
-    }
 }
 
 protocol BikeStationAnnotationViewDelegate: class {
-    func bikeStationAnnotationViewToggleFavourite(_ view: BikeStationAnnotationView)
-    func bikeStationAnnotationViewToggleBlock(_ view: BikeStationAnnotationView)
-    func bikeStationAnnotationViewDirections(_ view: BikeStationAnnotationView)
+    func bikeStationAnnotationViewDetailCalloutAccessoryView(_ view: BikeStationAnnotationView) -> UIView?
+}
+
+// Custom button class so that we can keep a reference to the
+// annotation that is linked to the button.
+
+class BikeStationAnnotationButton: UIButton {
+    weak var bikeStationAnnotation: BikeStationAnnotation?
 }
 
 extension MapViewController: MKMapViewDelegate {
@@ -703,24 +666,69 @@ extension MapViewController: MKMapViewDelegate {
 
         return markerAnnotationView
     }
-
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-    }
 }
 
 extension MapViewController: BikeStationAnnotationViewDelegate {
-    func bikeStationAnnotationViewToggleFavourite(_ view: BikeStationAnnotationView) {
+    func bikeStationAnnotationViewDetailCalloutAccessoryView(_ view: BikeStationAnnotationView) -> UIView? {
+        guard let bikeStationAnnotation = view.bikeStationAnnotation else {
+            return nil
+        }
 
+        let favouriteButton = BikeStationAnnotationButton(type: .system)
+        favouriteButton.translatesAutoresizingMaskIntoConstraints = false
+        favouriteButton.bikeStationAnnotation = bikeStationAnnotation
+        favouriteButton.setTitle("Pin to widget", for: .normal)
+        favouriteButton.contentHorizontalAlignment = .left
+        // This is needed, otherwise the stack view collapses to
+        // the size of the smallest element in it.
+        favouriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        favouriteButton.addTarget(self, action: #selector(toggleFavourite), for: .touchUpInside)
+
+        let blockButton = BikeStationAnnotationButton(type: .system)
+        blockButton.translatesAutoresizingMaskIntoConstraints = false
+        blockButton.bikeStationAnnotation = bikeStationAnnotation
+        blockButton.setTitle("Hide from widget", for: .normal)
+        blockButton.contentHorizontalAlignment = .left
+        blockButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        blockButton.addTarget(self, action: #selector(toggleBlock), for: .touchUpInside)
+
+        let directionsButton = BikeStationAnnotationButton(type: .system)
+        directionsButton.translatesAutoresizingMaskIntoConstraints = false
+        directionsButton.bikeStationAnnotation = bikeStationAnnotation
+        directionsButton.setTitle("Directions", for: .normal)
+        directionsButton.contentHorizontalAlignment = .left
+        directionsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        directionsButton.addTarget(self, action: #selector(directions), for: .touchUpInside)
+
+        let stackView = UIStackView(arrangedSubviews: [directionsButton])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+
+        return stackView
     }
 
-    func bikeStationAnnotationViewToggleBlock(_ view: BikeStationAnnotationView) {
-
-    }
-
-    func bikeStationAnnotationViewDirections(_ view: BikeStationAnnotationView) {
-        guard let coordinate = view.bikeStationAnnotation?.coordinate else {
+    @objc private func toggleFavourite(_ sender: UIButton?) {
+        guard let bikeStationAnnotion = (sender as? BikeStationAnnotationButton)?.bikeStationAnnotation else {
             return
         }
+
+     //   delegate?.bikeStationAnnotationViewToggleFavourite(self)
+    }
+
+    @objc private func toggleBlock(_ sender: UIButton?) {
+        guard let bikeStationAnnotion = (sender as? BikeStationAnnotationButton)?.bikeStationAnnotation else {
+            return
+        }
+
+      //  delegate?.bikeStationAnnotationViewToggleBlock(self)
+    }
+
+    @objc private func directions(_ sender: UIButton?) {
+        guard let bikeStationAnnotation = (sender as? BikeStationAnnotationButton)?.bikeStationAnnotation else {
+            return
+        }
+
+        let coordinate = bikeStationAnnotation.coordinate
 
         // Map Links Documentation: https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html
         //

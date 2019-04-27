@@ -14,6 +14,7 @@
 		6902CEA12263673A003945E3 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 6902CEA32263673A003945E3 /* Localizable.stringsdict */; };
 		6902CEA4226367FD003945E3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		6902CEA522636801003945E3 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 6902CEA32263673A003945E3 /* Localizable.stringsdict */; };
+		691C5DCC2274CDCC009317EB /* StationDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691C5DCB2274CDCC009317EB /* StationDataStore.swift */; };
 		69A5951A226C5EDA00894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
 		69A5951D226C645000894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
 		69A5951F226C7BBD00894315 /* UserLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A5951E226C7BBD00894315 /* UserLocationManager.swift */; };
@@ -57,6 +58,7 @@
 		6902CE9122633164003945E3 /* TodayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewController.swift; sourceTree = "<group>"; };
 		6902CE9622633164003945E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6902CEA22263673A003945E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		691C5DCB2274CDCC009317EB /* StationDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDataStore.swift; sourceTree = "<group>"; };
 		697E871A226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		697E871B226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		697E871C226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = fi; path = fi.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				69BE2E00225CABE200B2F425 /* MapViewController.swift */,
 				69BE2DFE225C78FE00B2F425 /* DigitransitService.swift */,
 				69A5951E226C7BBD00894315 /* UserLocationManager.swift */,
+				691C5DCB2274CDCC009317EB /* StationDataStore.swift */,
 				69A59519226C5EDA00894315 /* MockResponses.swift */,
 				69A5951C226C622600894315 /* MockLocation.gpx */,
 				69BE2DF3225C776F00B2F425 /* Assets.xcassets */,
@@ -266,6 +269,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				69A5951F226C7BBD00894315 /* UserLocationManager.swift in Sources */,
+				691C5DCC2274CDCC009317EB /* StationDataStore.swift in Sources */,
 				69BE2DFF225C78FE00B2F425 /* DigitransitService.swift in Sources */,
 				69BE2E01225CABE200B2F425 /* MapViewController.swift in Sources */,
 				69A5951A226C5EDA00894315 /* MockResponses.swift in Sources */,
