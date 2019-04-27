@@ -24,15 +24,13 @@ class MapViewController: UIViewController {
     private var drawerViewTopAnchorConstraint: NSLayoutConstraint?
     private var drawerViewPanStartingHeight: CGFloat = 0
 
-    let markerAnnotationViewReuseIdentifier = String(describing: MKMarkerAnnotationView.self)
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
         let mapView = MKMapView(frame: .zero)
         mapView.translatesAutoresizingMaskIntoConstraints = false
         mapView.delegate = self
-        mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: markerAnnotationViewReuseIdentifier)
+        mapView.register(BikeStationAnnotationView.self, forAnnotationViewWithReuseIdentifier: BikeStationAnnotationView.reuseIdentifier)
         mapView.showsUserLocation = true
         self.mapView = mapView
 
@@ -604,11 +602,79 @@ extension MapViewController: UserLocationManagerDelegate {
     }
 }
 
-extension MapViewController: MKMapViewDelegate {
-    private class BikeStationAnnotation: MKPointAnnotation {
-        var markerTintColor: UIColor?
+class BikeStationAnnotation: MKPointAnnotation {
+    var markerTintColor: UIColor?
+}
+
+/// Create a subclass so that we can lazily create the callouts
+/// on user interaction instead of always creating them.
+class BikeStationAnnotationView: MKMarkerAnnotationView {
+    static let reuseIdentifier = String(describing: BikeStationAnnotationView.self)
+
+    weak var bikeStationAnnotation: BikeStationAnnotation?
+    weak var delegate: BikeStationAnnotationViewDelegate?
+
+    override var detailCalloutAccessoryView: UIView? {
+        get {
+            return actionsView
+        }
+        set {
+
+        }
     }
 
+    private lazy var actionsView: UIView? = {
+        let favouriteButton = UIButton(type: .system)
+        favouriteButton.translatesAutoresizingMaskIntoConstraints = false
+        favouriteButton.setTitle("Pin to widget", for: .normal)
+        favouriteButton.contentHorizontalAlignment = .left
+        // This is needed, otherwise the stack view collapses to
+        // the size of the smallest element in it.
+        favouriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        favouriteButton.addTarget(self, action: #selector(toggleFavourite), for: .touchUpInside)
+
+        let blockButton = UIButton(type: .system)
+        blockButton.translatesAutoresizingMaskIntoConstraints = false
+        blockButton.setTitle("Hide from widget", for: .normal)
+        blockButton.contentHorizontalAlignment = .left
+        blockButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        blockButton.addTarget(self, action: #selector(toggleBlock), for: .touchUpInside)
+
+        let directionsButton = UIButton(type: .system)
+        directionsButton.translatesAutoresizingMaskIntoConstraints = false
+        directionsButton.setTitle("Directions", for: .normal)
+        directionsButton.contentHorizontalAlignment = .left
+        directionsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        directionsButton.addTarget(self, action: #selector(directions), for: .touchUpInside)
+
+//        let stackView = UIStackView(arrangedSubviews: [favouriteButton, blockButton, directionsButton])
+        let stackView = UIStackView(arrangedSubviews: [directionsButton])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+
+        return stackView
+    }()
+
+    @objc private func toggleFavourite(_ sender: UIButton?) {
+        delegate?.bikeStationAnnotationViewToggleFavourite(self)
+    }
+
+    @objc private func toggleBlock(_ sender: UIButton?) {
+        delegate?.bikeStationAnnotationViewToggleBlock(self)
+    }
+
+    @objc private func directions(_ sender: UIButton?) {
+        delegate?.bikeStationAnnotationViewDirections(self)
+    }
+}
+
+protocol BikeStationAnnotationViewDelegate: class {
+    func bikeStationAnnotationViewToggleFavourite(_ view: BikeStationAnnotationView)
+    func bikeStationAnnotationViewToggleBlock(_ view: BikeStationAnnotationView)
+    func bikeStationAnnotationViewDirections(_ view: BikeStationAnnotationView)
+}
+
+extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let bikeStationAnnotation = annotation as? BikeStationAnnotation else {
             // We will also get called when MapKit needs a marker to show
@@ -622,25 +688,37 @@ extension MapViewController: MKMapViewDelegate {
             return nil
         }
 
-        let view = mapView.dequeueReusableAnnotationView(withIdentifier: markerAnnotationViewReuseIdentifier, for: annotation)
-        guard let markerAnnotationView = view as? MKMarkerAnnotationView else {
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: BikeStationAnnotationView.reuseIdentifier, for: annotation)
+        guard let markerAnnotationView = view as? BikeStationAnnotationView else {
             return view
         }
+
+        markerAnnotationView.bikeStationAnnotation = bikeStationAnnotation
+        markerAnnotationView.delegate = self
 
         markerAnnotationView.glyphText = annotation.title ?? "?"
         markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
 
-        let detailsButton = UIButton(type: .detailDisclosure)
-        detailsButton.translatesAutoresizingMaskIntoConstraints = false
-
         markerAnnotationView.canShowCallout = true
-        markerAnnotationView.rightCalloutAccessoryView = detailsButton
 
         return markerAnnotationView
     }
 
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        guard let coordinate = view.annotation?.coordinate else {
+    }
+}
+
+extension MapViewController: BikeStationAnnotationViewDelegate {
+    func bikeStationAnnotationViewToggleFavourite(_ view: BikeStationAnnotationView) {
+
+    }
+
+    func bikeStationAnnotationViewToggleBlock(_ view: BikeStationAnnotationView) {
+
+    }
+
+    func bikeStationAnnotationViewDirections(_ view: BikeStationAnnotationView) {
+        guard let coordinate = view.bikeStationAnnotation?.coordinate else {
             return
         }
 
