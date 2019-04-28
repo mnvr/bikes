@@ -173,6 +173,7 @@ class TodayViewController: UIViewController {
         let bikesAvailable: Int
         let distance: Int
         let isFavourite: Bool
+        let isFull: Bool
 
         static func < (lhs: TodayViewResultViewModel, rhs: TodayViewResultViewModel) -> Bool {
             // Sort such that favourites have a higher priority than others.
@@ -230,7 +231,13 @@ class TodayViewController: UIViewController {
                 isFavourite = true
             }
 
-            let result = TodayViewResultViewModel(name: name, bikesAvailable: bikesAvailable, distance: distance, isFavourite: isFavourite)
+            var isFull = false
+            if let spacesAvailable = bikeRentalStation.spacesAvailable,
+                spacesAvailable == 0 {
+                isFull = true
+            }
+
+            let result = TodayViewResultViewModel(name: name, bikesAvailable: bikesAvailable, distance: distance, isFavourite: isFavourite, isFull: isFull)
             results.append(result)
         }
 
@@ -244,10 +251,13 @@ class TodayViewController: UIViewController {
         let sortedResults = results.sorted()
         let nearestResults = sortedResults.prefix(3)
 
+        let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
+        let fullIndicatorWhenFull = " [" + NSLocalizedString("full", comment: "") + "]"
+
         var lines = [String]()
         for result in nearestResults {
-            let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
-            let line = String.localizedStringWithFormat(formatString, result.bikesAvailable, result.name, result.distance)
+            let fullIndicator = result.isFull ? fullIndicatorWhenFull : ""
+            let line = String.localizedStringWithFormat(formatString, result.bikesAvailable, result.name, fullIndicator, result.distance)
             lines.append(line)
         }
 
