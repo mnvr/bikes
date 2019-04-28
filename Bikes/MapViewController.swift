@@ -112,12 +112,13 @@ class MapViewController: UIViewController {
             // user might walk there and feel angry that what was
             // promised was not delivered).
 
-            let title: String?
+            // Text shown in the marker bubble
+            let glyphText: String
             let markerTintColor: UIColor?
             if let bikesAvailable = bikeRentalStation.bikesAvailable,
                 let realtime = bikeRentalStation.realtime,
                 realtime == true {
-                title = "\(bikesAvailable)"
+                glyphText = "\(bikesAvailable)"
 
                 // The color scheme can be improved. I'm not using a
                 // verbatim sequential scheme from colorbrewer because
@@ -144,11 +145,9 @@ class MapViewController: UIViewController {
                     markerTintColor = UIColor(red: 16 / 255.0, green: 137 / 255.0, blue: 8 / 255.0, alpha: 1)
                 }
             } else {
-                title = "?"
+                glyphText = "?"
                 markerTintColor = .black
             }
-
-            let subtitle = bikeRentalStation.name
 
             let latitude = CLLocationDegrees(lat)
             let longitude = CLLocationDegrees(lon)
@@ -157,9 +156,11 @@ class MapViewController: UIViewController {
             let annotation = BikeStationAnnotation()
             annotation.bikeRentalStation = bikeRentalStation
             annotation.coordinate = coordinate
-            annotation.title = title
-            annotation.subtitle = subtitle
-
+            // Title is the text shown below the marker bubble on the
+            // map in normal circumstances, and is shown on top of the
+            // callout when the annotation is selected.
+            annotation.title =  bikeRentalStation.name
+            annotation.glyphText = glyphText
             annotation.markerTintColor = markerTintColor
 
             annotations.append(annotation)
@@ -610,6 +611,7 @@ extension MapViewController: UserLocationManagerDelegate {
 }
 
 class BikeStationAnnotation: MKPointAnnotation {
+    var glyphText: String?
     var markerTintColor: UIColor?
     var bikeRentalStation: DigitransitService.BikeRentalStation?
 }
@@ -640,7 +642,7 @@ extension MapViewController: MKMapViewDelegate {
             return view
         }
 
-        markerAnnotationView.glyphText = annotation.title ?? "?"
+        markerAnnotationView.glyphText = bikeStationAnnotation.glyphText
         markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
 
         markerAnnotationView.canShowCallout = true
@@ -789,10 +791,6 @@ extension MapViewController: MKMapViewDelegate {
     }
 
     @objc private func toggleBlock(_ sender: UIButton?) {
-        guard let bikeStationAnnotion = (sender as? BikeStationAnnotationButton)?.bikeStationAnnotation else {
-            return
-        }
-
         guard let bikeStationAnnotationButton = (sender as? BikeStationAnnotationButton) else {
             return
         }
