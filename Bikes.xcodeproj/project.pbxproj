@@ -15,6 +15,7 @@
 		6902CEA4226367FD003945E3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 69B16D2622624E2E0036137E /* Localizable.strings */; };
 		6902CEA522636801003945E3 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 6902CEA32263673A003945E3 /* Localizable.stringsdict */; };
 		691C5DCC2274CDCC009317EB /* StationDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691C5DCB2274CDCC009317EB /* StationDataStore.swift */; };
+		6944038622757150003CF9B5 /* StationDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691C5DCB2274CDCC009317EB /* StationDataStore.swift */; };
 		69A5951A226C5EDA00894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
 		69A5951D226C645000894315 /* MockResponses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A59519226C5EDA00894315 /* MockResponses.swift */; };
 		69A5951F226C7BBD00894315 /* UserLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A5951E226C7BBD00894315 /* UserLocationManager.swift */; };
@@ -273,6 +274,7 @@
 			files = (
 				6902CE9E22633A86003945E3 /* DigitransitService.swift in Sources */,
 				6902CE9222633164003945E3 /* TodayViewController.swift in Sources */,
+				6944038622757150003CF9B5 /* StationDataStore.swift in Sources */,
 				69A5951D226C645000894315 /* MockResponses.swift in Sources */,
 				69A59520226C80C400894315 /* UserLocationManager.swift in Sources */,
 			);
