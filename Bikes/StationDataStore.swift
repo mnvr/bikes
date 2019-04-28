@@ -41,6 +41,11 @@ class StationDataStore {
         }
     }
 
+    var favouriteAndBlockedStationIDs: (favouriteStationIDs: Set<String>?, blockedStationIDs: Set<String>?) {
+        readFromDiskIfNeeded()
+        return (favouriteStationIDs: favouriteStationIDs, blockedStationIDs: blockedStationIDs)
+    }
+
     func isFavorite(stationID: String) -> Bool {
         readFromDiskIfNeeded()
         return favouriteStationIDs?.contains(stationID) == true

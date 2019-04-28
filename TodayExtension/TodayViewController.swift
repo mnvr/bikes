@@ -35,6 +35,7 @@ class TodayViewController: UIViewController {
     private var lastUserLocation: CLLocation?
 
     private var digitransitService = DigitransitService()
+    private var stationDataStore = StationDataStore()
     private var userLocationManager: UserLocationManager?
 
     override func viewDidLoad() {
@@ -166,6 +167,27 @@ class TodayViewController: UIViewController {
         }
     }
 
+    // Used in the showResults method below.
+    private struct TodayViewResultViewModel: Comparable {
+        let name: String
+        let bikesAvailable: Int
+        let distance: Int
+        let isFavourite: Bool
+
+        static func < (lhs: TodayViewResultViewModel, rhs: TodayViewResultViewModel) -> Bool {
+            // Sort such that favourites have a higher priority than others.
+            // Within equal priority levels, sort by distance.
+
+            if lhs.isFavourite, !rhs.isFavourite {
+                return true
+            } else if !lhs.isFavourite, rhs.isFavourite {
+                return false
+            } else {
+                return lhs.distance < rhs.distance
+            }
+        }
+    }
+
     private func showResults(response: DigitransitService.BikeRentalStationsResponse?, error: Error?, userLocation: CLLocation) {
         activityIndicatorView?.removeFromSuperview()
         activityIndicatorView = nil
@@ -179,8 +201,15 @@ class TodayViewController: UIViewController {
             return
         }
 
-        var distanceAndData = [(distance: Int, bikesAvailable: Int, name: String)]()
+        let (favouriteStationIDs, blockedStationIDs) = stationDataStore.favouriteAndBlockedStationIDs
+
+        var results = [TodayViewResultViewModel]()
         for bikeRentalStation in response?.data?.bikeRentalStations ?? [] {
+            if let stationID = bikeRentalStation.stationId,
+                blockedStationIDs?.contains(stationID) == true {
+                continue
+            }
+
             guard let bikesAvailable = bikeRentalStation.bikesAvailable,
                 bikeRentalStation.realtime == true,
                 let name = bikeRentalStation.name,
@@ -194,23 +223,31 @@ class TodayViewController: UIViewController {
             // Note that this is the "crow flies" distance, not the walking
             // distance, AFAIK there is no API to get that ATM.
             let distance = Int(location.distance(from: userLocation))
-            distanceAndData.append((distance: distance, bikesAvailable: bikesAvailable, name: name))
+
+            var isFavourite = false
+            if let stationID = bikeRentalStation.stationId,
+                favouriteStationIDs?.contains(stationID) == true {
+                isFavourite = true
+            }
+
+            let result = TodayViewResultViewModel(name: name, bikesAvailable: bikesAvailable, distance: distance, isFavourite: isFavourite)
+            results.append(result)
         }
 
-        if distanceAndData.isEmpty {
+        if results.isEmpty {
             let noResultsMessage = NSLocalizedString("today_extension_no_nearby_bikes", comment: "")
             showResultsLabel(lines: [noResultsMessage])
 
             return
         }
 
-        let sortedDistanceAndData = distanceAndData.sorted(by: { $0.distance < $1.distance })
-        let nearestDistanceAndData = sortedDistanceAndData.prefix(3)
+        let sortedResults = results.sorted()
+        let nearestResults = sortedResults.prefix(3)
 
         var lines = [String]()
-        for (distance, bikesAvailable, name) in nearestDistanceAndData {
+        for result in nearestResults {
             let formatString = NSLocalizedString("today_extension_line", comment: "%lu bikes at %@ (%lu m)")
-            let line = String.localizedStringWithFormat(formatString, bikesAvailable, name, distance)
+            let line = String.localizedStringWithFormat(formatString, result.bikesAvailable, result.name, result.distance)
             lines.append(line)
         }
 
