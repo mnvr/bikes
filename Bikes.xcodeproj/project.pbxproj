@@ -59,6 +59,8 @@
 		6902CE9622633164003945E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6902CEA22263673A003945E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		691C5DCB2274CDCC009317EB /* StationDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationDataStore.swift; sourceTree = "<group>"; };
+		69440384227570D5003CF9B5 /* Bikes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bikes.entitlements; sourceTree = "<group>"; };
+		694403852275710A003CF9B5 /* TodayExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TodayExtension.entitlements; sourceTree = "<group>"; };
 		697E871A226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		697E871B226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		697E871C226C941900E9F10A /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = fi; path = fi.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
@@ -107,6 +109,7 @@
 			isa = PBXGroup;
 			children = (
 				6902CE9122633164003945E3 /* TodayViewController.swift */,
+				694403852275710A003CF9B5 /* TodayExtension.entitlements */,
 				6902CE9622633164003945E3 /* Info.plist */,
 			);
 			path = TodayExtension;
@@ -142,6 +145,7 @@
 				69A59519226C5EDA00894315 /* MockResponses.swift */,
 				69A5951C226C622600894315 /* MockLocation.gpx */,
 				69BE2DF3225C776F00B2F425 /* Assets.xcassets */,
+				69440384227570D5003CF9B5 /* Bikes.entitlements */,
 				69BE2DF5225C776F00B2F425 /* LaunchScreen.storyboard */,
 				69BE2DF8225C776F00B2F425 /* Info.plist */,
 				69B16D21226247320036137E /* InfoPlist.strings */,
@@ -202,9 +206,19 @@
 				TargetAttributes = {
 					6902CE8B22633164003945E3 = {
 						CreatedOnToolsVersion = 10.2;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					69BE2DE8225C776F00B2F425 = {
 						CreatedOnToolsVersion = 10.2;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -329,6 +343,7 @@
 		6902CE9A22633164003945E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TodayExtension/TodayExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = TodayExtension/Info.plist;
@@ -348,6 +363,7 @@
 		6902CE9B22633164003945E3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TodayExtension/TodayExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = TodayExtension/Info.plist;
@@ -487,6 +503,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Bikes/Bikes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
@@ -506,6 +523,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Bikes/Bikes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4682UAMU7T;
 				INFOPLIST_FILE = Bikes/Info.plist;
