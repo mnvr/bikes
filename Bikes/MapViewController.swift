@@ -105,6 +105,10 @@ class MapViewController: UIViewController {
                     continue
             }
 
+            if bikeRentalStation.state == DigitransitService.BikeRentalStation.stateStationOff {
+                continue
+            }
+
             // The current API documentation states that non realtime
             // entries will always report a fixed number of bikes. So
             // if the station is not realtime, display a "?" to the

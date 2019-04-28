@@ -213,6 +213,7 @@ class TodayViewController: UIViewController {
 
             guard let bikesAvailable = bikeRentalStation.bikesAvailable,
                 bikeRentalStation.realtime == true,
+                bikeRentalStation.state != DigitransitService.BikeRentalStation.stateStationOff,
                 let name = bikeRentalStation.name,
                 let lat = bikeRentalStation.lat,
                 let lon = bikeRentalStation.lon else {

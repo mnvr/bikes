@@ -38,6 +38,12 @@ class DigitransitService {
         var lon: Float?
         /// Latitude of the bike rental station (WGS 84)
         var lat: Float?
+        /// Values seen so far:
+        /// - "Station on"
+        /// - "Station off"
+        var state: String?
+        static let stateStationOn = "Station on"
+        static let stateStationOff = "Station off"
     }
 
     struct BikeRentalStationsResponse: Decodable {
@@ -52,7 +58,7 @@ class DigitransitService {
         // Get all bikes
         // Interactive API playground at
         /*
-         https://api.digitransit.fi/graphiql/hsl?query=%7B%0A%20%20bikeRentalStations%20%7B%0A%20%20%20%20stationId%0A%20%20%20%20name%0A%20%20%20%20bikesAvailable%0A%20%20%20%20spacesAvailable%0A%20%20%20%20realtime%0A%20%20%20%20lat%0A%20%20%20%20lon%0A%20%20%7D%0A%7D
+         https://api.digitransit.fi/graphiql/hsl?query=%7B%0A%20%20bikeRentalStations%20%7B%0A%20%20%20%20stationId%0A%20%20%20%20name%0A%20%20%20%20bikesAvailable%0A%20%20%20%20spacesAvailable%0A%20%20%20%20realtime%0A%20%20%20%20lat%0A%20%20%20%20lon%0A%20%20%20%20state%0A%20%20%7D%0A%7D
          */
 
         // For an example response, see MockResponses.swift
@@ -67,6 +73,7 @@ class DigitransitService {
     realtime
     lat
     lon
+    state
   }
 }
 """#
