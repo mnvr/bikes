@@ -145,6 +145,12 @@ class MapViewController: UIViewController {
             annotation.glyphText = glyphText
             annotation.markerTintColor = markerTintColor
 
+            // Subtitle is shown below the dot in the normal map view.
+            if let spacesAvailable = bikeRentalStation.spacesAvailable,
+                spacesAvailable == 0 {
+                annotation.subtitle = NSLocalizedString("full", comment: "")
+            }
+
             annotations.append(annotation)
         }
 
@@ -667,6 +673,11 @@ extension MapViewController: MKMapViewDelegate {
 
         markerAnnotationView.glyphText = bikeStationAnnotation.glyphText
         markerAnnotationView.markerTintColor = bikeStationAnnotation.markerTintColor
+
+        // We seem to have to prod Map Kit to show the subtitle, left to
+        // the default I cannot seem to get it to display the subtitle
+        // in any cases.
+        markerAnnotationView.subtitleVisibility = .visible
 
         markerAnnotationView.canShowCallout = true
         markerAnnotationView.detailCalloutAccessoryView = makeDetailCalloutAccessoryView(bikeStationAnnotation: bikeStationAnnotation)
